@@ -4,8 +4,9 @@ import os
 # ----- rule ----- #
 rule short_read_fastp:
     input:
-        r1 = os.path.join(config["raw_data_path"], "{sample}.R1.fq.gz"),
-        r2 = os.path.join(config["raw_data_path"], "{sample}.R2.fq.gz"),
+        md5_check = "../01.qc/md5_check.tsv",
+        r1 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r1_suffix']),
+        r2 = os.path.join(config["raw_data_path"],"{sample}","{sample}" + config['r2_suffix']),
     output:
         r1_trimmed = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
         r2_trimmed = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
@@ -14,7 +15,7 @@ rule short_read_fastp:
     conda:
         "../envs/fastp.yaml",
     log:
-        "../logs/short_read_trim/{sample}.fastp.log",
+        "../logs/01.short_read_trim/{sample}.fastp.log",
     message:
         "Running Fastp on {input.r1} and {input.r2}",
     params:
@@ -38,7 +39,8 @@ rule short_read_fastp:
 
 rule multiqc_trim:
     input:
-        fastp_report = expand("../01.qc/short_read_trim/{sample}.fastp.html", sample=load_samples.keys()),
+        md5_check = "../01.qc/md5_check.tsv",
+        fastp_report = expand("../01.qc/short_read_trim/{sample}.fastp.html", sample=samples.keys()),
     output:
         report_dir = directory("../01.qc/multiqc_short_read_trim/")
     conda:
@@ -50,7 +52,7 @@ rule multiqc_trim:
         report = "multiqc_short_read_trim_report.html",
         title = "short_read_trim-multiqc-report",
     log:
-        "../logs/trim/multiqc_trim.log",
+        "../logs/01.short_read_trim/multiqc_trim.log",
     shell:
         """
         multiqc {params.fastqc_reports} \

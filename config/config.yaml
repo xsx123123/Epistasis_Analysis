@@ -1,0 +1,27 @@
+# reference & index
+genome: /data/jzhang/reference/Lactuca_sativa_V8/Phytozome/PhytozomeV12/early_release/Lsativa_467_v5/assembly/Lsativa_467_v8.fa
+bwa_index_path: /data/jzhang/reference/Lactuca_sativa_V8/Phytozome/PhytozomeV12/early_release/Lsativa_467_v5/assembly/Lsativa_467_v8.fa
+bwa_index: true
+bwa_mem2:
+  index: /data/jzhang/reference/Lactuca_sativa_V8/Phytozome/PhytozomeV12/early_release/Lsativa_467_v5/assembly/Lsativa_467_v8.fa
+qualimap:
+  genome_gff: /data/jzhang/reference/Lactuca_sativa_V8/Phytozome/PhytozomeV12/early_release/Lsativa_467_v5/annotation/Lsativa_467_v5.gene.gff3
+  format: HTML
+# raw_data qc
+checkmd5:
+  name: MD5.txt
+trim:
+  length_required: 75
+  quality_threshold: 25
+  adapter_fasta: "./data/Universal_Adapter.fa"
+# analysis resource
+threads:
+  md5_check: 10
+  bwa_mem2: 10
+  samtools: 10
+  fastp: 10
+  qualimap: 10
+  qualimap: 10
+# other parameter
+print_target: true
+log_level: INFO
