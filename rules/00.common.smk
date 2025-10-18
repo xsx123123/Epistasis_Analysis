@@ -51,4 +51,13 @@ def Epistasis(config:dict = None) -> list:
         rich_print(WGS_Epistasis)
     return  WGS_Epistasis
     
+def judge_bwa_index(config:dict = None) -> bool:
+    """
+    判断是否需要重新构建bwa索引
+    """
+    bwa_index = config['bwa_mem2']['index']
+    bwa_index_files = [bwa_index + suffix for suffix in ['.0123', '.amb', '.ann', '.bwt.2bit.64', '.pac', '.alt']]
+    
+    return not all(os.path.exists(f) for f in bwa_index_files)
+
 # --------------------- #

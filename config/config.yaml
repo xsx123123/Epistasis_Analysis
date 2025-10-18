@@ -4,6 +4,7 @@ bwa_index_path: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genom
 bwa_index: true
 bwa_mem2:
   index: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
+  PL: DNB
 qualimap:
   genome_gff: /data/jzhang/reference/Lactuca_sativa_V11/data/jzhang/reference/Lactuca_sativa_V11
   format: HTML

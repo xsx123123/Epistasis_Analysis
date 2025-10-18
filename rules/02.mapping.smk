@@ -1,27 +1,30 @@
 #!/usr/bin/snakemake
 # -*- coding: utf-8 -*-
 import os
+from loguru import logger
 # ----- rule ----- #
-if config["bwa_index"] == False:
+if judge_bwa_index(config = config) == True:
+    logger.info(f"Epistasis Analysis pipeline will rebuild BWA index")
     rule build_bwa_index:
         input:
             genome = config["genome"],
         output:
-            config["bwa_index_path"] + ".amb",
-            config["bwa_index_path"] + ".ann",
-            config["bwa_index_path"] + ".bwt",
-            config["bwa_index_path"] + ".pac",
-            config["bwa_index_path"] + ".sa"
+            config["bwa_mem2"]["index"] + '.0123',
+            config["bwa_mem2"]["index"] + '.amb',
+            config["bwa_mem2"]["index"] + '.ann',
+            config["bwa_mem2"]["index"] + '.bwt.2bit.64',
+            config["bwa_mem2"]["index"] + '.pac',
+            config["bwa_mem2"]["index"] + '.alt',   
         log:
             "logs/02.mapping/bwa_mem2.log"
         message:
-            "Building BWA index for {input.genome}"
+            "Building BWA-mem2 index for {input.genome}"
         conda:
             "../envs/bwa2.yaml",
         shell:
             """
             bwa-mem2 index \
-                     -p {config[bwa_index_path]} \
+                     -p {config["bwa_mem2"]["index"]} \
                       {input.genome} 2>{log}
             """
 
@@ -39,15 +42,16 @@ rule bwa_mapping:
         "Running bwa-mem2 mapping on {input.r1} and {input.r2}",
     params:
         index = config["bwa_mem2"]["index"],
+        pl = config["bwa_mem2"]["PL"],
     threads: 
         config["threads"]["bwa_mem2"],
     shell:
         """
-        bwa-mem2 mem -t {threads} \
-        -R '@RG\tID:{wildcards.sample}\tSM:{wildcards.sample}\tPL:ILLUMINA\tLB:{wildcards.sample}' \
+        ( bwa-mem2 mem -t {threads} \
+        -R '@RG\tID:{wildcards.sample}\tSM:{wildcards.sample}\tPL:{params.pl}\tLB:{wildcards.sample}' \
         {params.index} \
         {input.r1} {input.r2} | samtools view -@ {threads} \
-        -Sbh -o {output.bam} 2>{log}
+        -Sbh -o {output.bam} ) 2>{log}
         """
 
 rule sort_index:
