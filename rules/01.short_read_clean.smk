@@ -18,6 +18,8 @@ rule short_read_fastp:
         "../logs/01.short_read_trim/{sample}.fastp.log",
     message:
         "Running Fastp on {input.r1} and {input.r2}",
+    benchmark:
+        "../benchmarks/{sample}_fastp_benchmark.txt",
     params:
         length_required = config["trim"]["length_required"],
         quality_threshold = config["trim"]["quality_threshold"],
@@ -47,6 +49,8 @@ rule multiqc_trim:
         "../envs/multiqc.yaml",
     message:
         "Running MultiQC to aggregate fastp reports",
+    benchmark:
+        "../benchmarks/multiqc_fastp_benchmark.txt",
     params:
         fastqc_reports = "../01.qc/short_read_trim/",
         report = "multiqc_short_read_trim_report.html",

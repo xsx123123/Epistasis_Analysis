@@ -9,7 +9,9 @@ rule check_md5:
     output:
         md5_check = "../01.qc/md5_check.tsv",
     message:
-        "Running FastQC on {input.md5}",
+        "Running md5 check on raw data files on {input.md5} directory",
+    benchmark:
+        "../benchmarks/md5_check_benchmark.txt",
     params:
         checkmd5_name = config['checkmd5']['name'],
         log_file = "../logs/01.qc/md5_check.log",
@@ -27,7 +29,9 @@ rule check_md5:
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        r1 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r1_suffix']),
+        r1 = os.path.join(config["raw_data_path"],
+                          "{sample}",
+                          "{sample}" + config['r1_suffix']),
     output:
         r1_html = "../01.qc/short_read_qc_r1/{sample}."+config['r1_suffix']+".html",
         r1_zip = "../01.qc/short_read_qc_r1/{sample}."+config['r1_suffix']+".zip",
@@ -39,6 +43,8 @@ rule short_read_qc_r1:
         out_dir = "../01.qc/short_read_qc_r1/",
     message:
         "Running FastQC on {input.r1}",
+    benchmark:
+        "../benchmarks/{sample}_r1_fastqc_benchmark.txt",
     threads: 1
     shell:
         """
@@ -62,6 +68,8 @@ rule short_read_qc_r2:
         out_dir = "../01.qc/short_read_qc_r2",
     message:
         "Running FastQC on {input.r2}",
+    benchmark:
+        "../benchmarks/{sample}_r2_fastqc_benchmark.txt",
     threads: 1
     shell:
         """
@@ -86,6 +94,8 @@ rule short_read_multiqc_r1:
         title = "r1-raw-data-multiqc-report",
     log:
         "../logs/01.multiqc/multiqc-r1.log",
+    benchmark:
+        "../benchmarks/fastqc_multiqc-r1_benchmark.txt",
     shell:
         """
         multiqc {params.fastqc_reports} \
@@ -110,6 +120,8 @@ rule short_read_multiqc_r2:
         title = "r2-raw-data-multiqc-report",
     log:
         "../logs/01.multiqc/multiqc-r2.log",
+    benchmark:
+        "../benchmarks/fastqc_multiqc-r2_benchmark.txt",
     shell:
         """
         multiqc {params.fastqc_reports} \
