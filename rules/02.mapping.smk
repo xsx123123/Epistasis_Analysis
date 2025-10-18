@@ -68,29 +68,30 @@ rule sort_index:
         samtools index -@ {threads} {output.sort_bam}) 2>{log}
         """
 
-rule Picard_MarkDuplicates:
+rule sambamba_MarkDuplicates:
     input:
         bam = '../02.mapping/bwa_mem2/{sample}.sort.bam',
     output:
-        duplicates_bam = '../02.mapping/bwa_mem2/{sample}.dup.sort.bam',
-        metrics = '../02.mapping/bwa_mem2/{sample}_marked_dup_metrics.txt',
-    conda:
-        "../envs/picard.yaml",
+        duplicates_bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     log:
         "../logs/02.mapping/duplicates_{sample}.log",
-    threads: 1
+    params:
+        sambamba = config['software']['sambamba']
+    threads: 8
     shell:
         """
-        picard MarkDuplicates --INPUT {input.bam} \
-            --OUTPUT {output.duplicates_bam} \
-            --METRICS_FILE {output.metrics} 2>{log}
+        {params.sambamba} markdup \
+                          --nthreads=NTHREADS {threads} \
+                          --show-progress \
+                          {input.bam} \
+                          {output.duplicates_bam} 2>{log}
         """
 
 rule Duplicates_bam_index:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.sort.bam',
+        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
-        duplicates_bam_bai = '../02.mapping/bwa_mem2/{sample}.dup.sort.bam.bai',
+        duplicates_bam_bai = '../02.mapping/bwa_mem2/{sample}.dup.bam.bai',
     conda:
         "../envs/bwa2.yaml",
     log:
@@ -104,7 +105,7 @@ rule Duplicates_bam_index:
 
 rule bam_coverage:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.sort.bam',
+        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
         dist = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.txt",
         summary = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt",
@@ -128,13 +129,13 @@ rule bam_coverage:
 
 rule qualimap_qc:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.sort.bam',
+        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
         qualimap_report_html = '../02.mapping/qualimap_report/{sample}_qualimap_report.html',
     conda:
         "../envs/qualimap.yaml",
     log:
-        "../logs/02.mapping/bwa_sort_index_{sample}.log",
+        "../logs/02.mapping/qualimap_report_{sample}.log",
     params:
         genome_gff = config['qualimap']["genome_gff"],
         outformat = config['qualimap']["format"],
@@ -149,6 +150,46 @@ rule qualimap_qc:
                  -gff {params.genome_gff} \
                  -outdir {params.prefix_dir} \
                  -outfile {output.qualimap_report_html} \
-                 -outformat {params.outformat}
-                 2>{log}
+                 -outformat {params.outformat} 2>{log}
         """
+
+rule samtools_flagst:
+    input:
+        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+    output:
+        samtools_flagstat = '../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv',
+    conda:
+        "../envs/bwa2.yaml",
+    log:
+        "../logs/02.mapping/bam_dup_lagstat_{sample}.log",
+    threads: 
+        config["threads"]["samtools_flagstat"],
+    shell:
+        """
+        samtools flagstat \
+                 -@ {threads} \
+                 -O tsv \
+                 {input.bam} > {output.samtools_flagstat} 2>{log}
+        """
+
+rule samtools_stats:
+    input:
+        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+    output:
+        samtools_stats = '../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
+    conda:
+        "../envs/bwa2.yaml",
+    log:
+        "../logs/02.mapping/bam_dup_stats_{sample}.log",
+    threads: 
+        config["threads"]["samtools_stats"],
+    params:
+        reference = config["samtools_stats"]['reference']
+    shell:
+        """
+        samtools stats \
+                 -@ {threads} \
+                 --reference {params.reference} \
+                 {input.bam} > {output.samtools_stats} 2>{log}
+        """
+# ----- rule ----- #

@@ -34,17 +34,19 @@ def Epistasis(config:dict = None) -> list:
                                            sample=samples.keys()))
     WGS_Epistasis.extend(expand('../02.mapping/bwa_mem2/{sample}.dup.sort.bam',
                                            sample=samples.keys()))
-    WGS_Epistasis.extend(expand('../02.mapping/bwa_mem2/{sample}_marked_dup_metrics.txt',
-                                           sample=samples.keys()))
     WGS_Epistasis.extend(expand('../02.mapping/bwa_mem2/{sample}.dup.sort.bam.bai',
                                            sample=samples.keys()))                                      
-    WGS_Epistasis.extend(expand('../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.tx',
+    WGS_Epistasis.extend(expand('../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.txt',
                                            sample=samples.keys())) 
     WGS_Epistasis.extend(expand('../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt',
                                            sample=samples.keys())) 
     WGS_Epistasis.extend(expand('../02.mapping/qualimap_report/{sample}_qualimap_report.html',
                                            sample=samples.keys())) 
-    # Print Target rule           
+    WGS_Epistasis.extend(expand('../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv',
+                                           sample=samples.keys())) 
+    WGS_Epistasis.extend(expand('../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
+                                           sample=samples.keys())) 
+    
     if config['print_target']:
         rich_print(WGS_Epistasis)
     return  WGS_Epistasis

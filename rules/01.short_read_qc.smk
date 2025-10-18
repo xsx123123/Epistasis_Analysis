@@ -29,8 +29,8 @@ rule short_read_qc_r1:
         md5_check = "../01.qc/md5_check.tsv",
         r1 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r1_suffix']),
     output:
-        r1_html = "../01.qc/short_read_qc_r1/{sample}.R1_fastqc.html",
-        r1_zip = "../01.qc/short_read_qc_r1/{sample}.R1_fastqc.zip", 
+        r1_html = "../01.qc/short_read_qc_r1/{sample}."+config['r1_suffix']+".html",
+        r1_zip = "../01.qc/short_read_qc_r1/{sample}."+config['r1_suffix']+".zip",
     conda:
         "../envs/fastqc.yaml",
     log:
@@ -52,8 +52,8 @@ rule short_read_qc_r2:
         md5_check = "../01.qc/md5_check.tsv",
         r2 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r2_suffix']),
     output:
-        r2_html = "../01.qc/short_read_qc_r2/{sample}.R2_fastqc.html",
-        r2_zip = "../01.qc/short_read_qc_r2/{sample}.R2_fastqc.zip", 
+        r2_html = "../01.qc/short_read_qc_r1/{sample}."+config['r2_suffix']+".html",
+        r2_zip = "../01.qc/short_read_qc_r1/{sample}."+config['r2_suffix']+".zip",
     conda:
         "../envs/fastqc.yaml",
     log:
@@ -73,7 +73,7 @@ rule short_read_qc_r2:
 # logger.info('Run MultiQC to summarize R1 fastqc QC reports')
 rule short_read_multiqc_r1:
     input:
-        fastqc_files_r1 = expand("../01.qc/short_read_qc_r1/{sample}.R1_fastqc.zip", sample=samples.keys()),
+        fastqc_files_r1 = expand("../01.qc/short_read_qc_r1/{sample}."+config['r1_suffix']+".zip", sample=samples.keys()),
     output:
         report_dir = directory("../01.qc/short_read_r1_multiqc/")
     conda:
@@ -97,7 +97,7 @@ rule short_read_multiqc_r1:
 # logger.info('Run MultiQC to summarize R2 fastqc QC reports')
 rule short_read_multiqc_r2:
     input:
-        fastqc_files_r2 = expand("../01.qc/short_read_qc_r2/{sample}.R2_fastqc.zip", sample=samples.keys()),
+        fastqc_files_r2 = expand("../01.qc/short_read_qc_r1/{sample}."+config['r2_suffix']+".zip", sample=samples.keys()),
     output:
         report_dir = directory("../01.qc/short_read_r2_multiqc/")
     conda:
