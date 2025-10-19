@@ -14,6 +14,7 @@ include: 'rules/00.log.smk'
 include: 'rules/00.common.smk'
 include: 'rules/00.id_convert.smk'
 include: 'rules/01.short_read_qc.smk'
+include: 'rules/01.Contamination_check.smk'
 include: 'rules/01.short_read_clean.smk'
 include: 'rules/02.mapping.smk'
 # --------- target rule --------- #

@@ -1,18 +1,23 @@
 # reference & index
 genome: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
 bwa_index_path: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
-bwa_index: true
 bwa_mem2:
   index: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
   PL: DNB
 qualimap:
-  genome_gff: /data/jzhang/reference/Lactuca_sativa_V11/data/jzhang/reference/Lactuca_sativa_V11
+  genome_gff: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.gff
   format: HTML
+  mem: 20000M
 samtools_stats:
   reference: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
+fastq_screen:
+  run: true
+  conf: /home/jzhang/software/FastQ-Screen-0.16.0/fastq_screen.conf
+  subset: 100000
+  aligner: Bowtie2
 # software
 software:
-  sambamba: 
+  sambamba: /home/jzhang/software/tools/sambamba-1.0.1
 # raw_data qc
 checkmd5:
   name: MD5.txt
@@ -30,6 +35,8 @@ threads:
   qualimap: 10
   samtools_flagstat: 10
   samtools_stats: 10
+  fastq_screen: 10
 # other parameter
 print_target: true
 log_level: INFO
+bam_remove: true

@@ -35,7 +35,7 @@ rule bwa_mapping:
         r1 = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
         r2 = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
     output:
-        bam = '../02.mapping/bwa_mem2/{sample}.bam',
+        bam = temp('../02.mapping/bwa_mem2/{sample}.bam') if config['bam_remove'] else '../02.mapping/bwa_mem2/{sample}.bam',
     conda:
         "../envs/bwa2.yaml",
     log:
@@ -97,7 +97,7 @@ rule sambamba_MarkDuplicates:
     shell:
         """
         {params.sambamba} markdup \
-                          --nthreads=NTHREADS {threads} \
+                          --nthreads {threads} \
                           --show-progress \
                           {input.bam} \
                           {output.duplicates_bam} 2>{log}
@@ -167,6 +167,7 @@ rule qualimap_qc:
     params:
         genome_gff = config['qualimap']["genome_gff"],
         outformat = config['qualimap']["format"],
+        mem = config['qualimap']["mem"],
         prefix_dir = '../02.mapping/qualimap_report/',
     threads: 
         config["threads"]["qualimap"],
@@ -178,7 +179,8 @@ rule qualimap_qc:
                  -gff {params.genome_gff} \
                  -outdir {params.prefix_dir} \
                  -outfile {output.qualimap_report_html} \
-                 -outformat {params.outformat} 2>{log}
+                 -outformat {params.outformat} \
+                 --java-mem-size=16G &>{log}
         """
 
 rule samtools_flagst:

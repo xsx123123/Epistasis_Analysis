@@ -17,6 +17,11 @@ def Epistasis(config:dict = None) -> list:
             "../01.qc/short_read_r2_multiqc/"    
                     
         ]
+    if config['fastq_screen']['run']:
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen/{sample}_1_screen.txt",
+                                          sample=samples.keys()))
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen/{sample}_2_screen.txt",
+                                          sample=samples.keys()))
     # short-read trim & clean result
     WGS_Epistasis.extend(expand("../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
                                           sample=samples.keys()))
