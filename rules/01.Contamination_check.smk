@@ -4,7 +4,10 @@ import os
 # ----- rule ----- #
 rule short_read_fastq_screen_r1:
     input:
-        r1 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r1_suffix']),
+        r1 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r1_suffix']),
     output:
         fastq_screen_result = "../01.qc/fastq_screen_r1/{sample}_1_screen.txt",
     log:
@@ -34,7 +37,10 @@ rule short_read_fastq_screen_r1:
 
 rule short_read_fastq_screen_r2:
     input:
-        r2 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r2_suffix']),
+        r2 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r2_suffix']),
     output:
         fastq_screen_result = "../01.qc/fastq_screen_r2/{sample}_2_screen.txt",
     log:

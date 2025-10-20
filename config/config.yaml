@@ -16,6 +16,9 @@ fastq_screen:
   conf: /home/jzhang/software/FastQ-Screen-0.16.0/fastq_screen.conf
   subset: 100000
   aligner: Bowtie2
+bcftools:
+  path: /home/jzhang/software/bcftools-1.22/bcftools
+  reference: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
 # software
 software:
   sambamba: /home/jzhang/software/tools/sambamba-1.0.1
@@ -37,8 +40,12 @@ threads:
   samtools_flagstat: 10
   samtools_stats: 10
   fastq_screen: 10
+  bcftools: 10
 # other parameter
 print_target: true
 log_level: INFO
 bam_remove: true
 convert_md5: 'link_dir'
+r1_suffix: _R1.fq.gz
+r2_suffix: _R2.fq.gz
+md5: MD5.txt

@@ -6,6 +6,7 @@ rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
         r1 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
                           "{sample}",
                           "{sample}" + config['r1_suffix']),
     output:
@@ -32,7 +33,10 @@ rule short_read_qc_r1:
 rule short_read_qc_r2:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        r2 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r2_suffix']),
+        r2 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r2_suffix']),
     output:
         r2_html = "../01.qc/short_read_qc_r2/{sample}_2_fastqc.html",
         r2_zip = "../01.qc/short_read_qc_r2/{sample}_2_fastqc.zip",

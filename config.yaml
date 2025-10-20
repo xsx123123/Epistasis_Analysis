@@ -1,8 +1,5 @@
 project_name: 'WGS_Epistasis'
 # short read raw-data
 raw_data_path: '/data/jzhang/project/WGS_Epistasis_2025.10.17/00.raw_data'
-convert_md5: 'link_dir'
 # short read samples info
 sample_csv: '/data/jzhang/project/WGS_Epistasis_2025.10.17/workflow/sample.csv'
-r1_suffix: _1.fq.gz
-r2_suffix: _2.fq.gz

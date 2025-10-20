@@ -55,7 +55,9 @@ def Epistasis(config:dict = None) -> list:
                                            sample=samples.keys())) 
     WGS_Epistasis.extend(expand('../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
                                            sample=samples.keys())) 
-    
+    # Call Variant
+    WGS_Epistasis.extend(expand('../03.call_variant/{sample}.vcf.gz',
+                                           sample=samples.keys()))
     if config['print_target']:
         rich_print(WGS_Epistasis)
     return  WGS_Epistasis
