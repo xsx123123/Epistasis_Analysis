@@ -12,6 +12,7 @@ samtools_stats:
   reference: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
 fastq_screen:
   run: true
+  path: /home/jzhang/software/FastQ-Screen-0.16.0/fastq_screen
   conf: /home/jzhang/software/FastQ-Screen-0.16.0/fastq_screen.conf
   subset: 100000
   aligner: Bowtie2
@@ -40,3 +41,4 @@ threads:
 print_target: true
 log_level: INFO
 bam_remove: true
+convert_md5: 'link_dir'

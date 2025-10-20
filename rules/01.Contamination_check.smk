@@ -11,6 +11,7 @@ rule short_read_fastq_screen_r1:
         "../logs/01.short_read_qc_r1/{sample}.r1.fastq_screen.log",
     params:
         out_dir = "../01.qc/fastq_screen_r1/",
+        fastq_screen_dir = config['fastq_screen']['path'],
         conf = config['fastq_screen']['conf'],
         subset = config['fastq_screen']['subset'],
         aligner = config['fastq_screen']['aligner'],
@@ -22,7 +23,7 @@ rule short_read_fastq_screen_r1:
         config['threads']['fastq_screen'],
     shell:
         """
-        fastq_screen --threads  {threads} \
+        {params.fastq_screen_dir} --threads  {threads} \
                      --force \
                      --subset  {params.subset} \
                      --aligner  {params.aligner} \

@@ -2,30 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 # ----- rule ----- #
-rule check_md5:
-    input:
-        md5 = expand(os.path.join(config['raw_data_path'], '{sample}'),
-             sample=samples.keys()),
-    output:
-        md5_check = "../01.qc/md5_check.tsv",
-    message:
-        "Running md5 check on raw data files on {input.md5} directory",
-    benchmark:
-        "../benchmarks/md5_check_benchmark.txt",
-    params:
-        checkmd5_name = config['checkmd5']['name'],
-        log_file = "../logs/01.qc/md5_check.log",
-    threads: 
-        config['threads']['md5_check']
-    shell:
-        """
-        ./scripts/md5_checker_rs/target/release/md5_checker_rs {input.md5} \
-                -f {params.checkmd5_name} \
-                -t {threads} \
-                -o {output.md5_check} \
-                --log-file {params.log_file}
-        """
-
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",

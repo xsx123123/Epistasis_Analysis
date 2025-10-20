@@ -8,7 +8,7 @@ from rich import print as rich_print
 # Target rule function
 def Epistasis(config:dict = None) -> list:
     """
-    short-read & long-read RNA-seq assembly & annotation pipeline target
+    Epistasis analysis function. This function performs epistasis analysis on the input configuration and returns a list of results.
     """
     # short-read raw-data qc result
     WGS_Epistasis = [
