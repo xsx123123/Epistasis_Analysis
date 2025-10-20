@@ -6,11 +6,11 @@ rule short_read_fastq_screen_r1:
     input:
         r1 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r1_suffix']),
     output:
-        fastq_screen_result = "../01.qc/fastq_screen/{sample}_1_screen.txt",
+        fastq_screen_result = "../01.qc/fastq_screen_r1/{sample}_1_screen.txt",
     log:
         "../logs/01.short_read_qc_r1/{sample}.r1.fastq_screen.log",
     params:
-        out_dir = "../01.qc/fastq_screen/",
+        out_dir = "../01.qc/fastq_screen_r1/",
         conf = config['fastq_screen']['conf'],
         subset = config['fastq_screen']['subset'],
         aligner = config['fastq_screen']['aligner'],
@@ -35,11 +35,11 @@ rule short_read_fastq_screen_r2:
     input:
         r2 = os.path.join(config["raw_data_path"],"{sample}", "{sample}" + config['r2_suffix']),
     output:
-        fastq_screen_result = "../01.qc/fastq_screen/{sample}_2_screen.txt",
+        fastq_screen_result = "../01.qc/fastq_screen_r2/{sample}_2_screen.txt",
     log:
         "../logs/01.short_read_qc_r2/{sample}.r2.fastq_screen.log",
     params:
-        out_dir = "../01.qc/fastq_screen/",
+        out_dir = "../01.qc/fastq_screen_r2/",
         conf = config['fastq_screen']['conf'],
         subset = config['fastq_screen']['subset'],
         aligner = config['fastq_screen']['aligner'],
@@ -58,5 +58,55 @@ rule short_read_fastq_screen_r2:
                      --conf {params.conf} \
                      --outdir {params.out_dir} \
                      {input.r2} &> {log}
+        """
+
+rule fastq_screen_multiqc_r1:
+    input:
+        fastqc_files_r1 = expand("../01.qc/fastq_screen_r1/{sample}_1_screen.txt", sample=samples.keys()),
+    output:
+        report_dir = directory("../01.qc/fastq_screen_multiqc_r1/")
+    conda:
+        "../envs/multiqc.yaml",
+    message:
+        "Running MultiQC to aggregate R1 fastq screen reports",
+    params:
+        fastqc_reports = "../01.qc/fastq_screen_r1",
+        report = "multiqc_r1_fastq_screen_report.html",
+        title = "r1-fastq-screen-multiqc-report",
+    log:
+        "../logs/01.multiqc/multiqc-fastq-screen-r1.log",
+    benchmark:
+        "../benchmarks/fastqc_multiqc-fastq-screen-r1_benchmark.txt",
+    shell:
+        """
+        multiqc {params.fastqc_reports} \
+                --outdir {output.report_dir} \
+                -i {params.title} \
+                -n {params.report} &> {log}
+        """
+
+rule fastq_screen_multiqc_r2:
+    input:
+        fastqc_files_r1 = expand("../01.qc/fastq_screen_r2/{sample}_2_screen.txt", sample=samples.keys()),
+    output:
+        report_dir = directory("../01.qc/fastq_screen_multiqc_r2/")
+    conda:
+        "../envs/multiqc.yaml",
+    message:
+        "Running MultiQC to aggregate R2 fastq screen reports",
+    params:
+        fastqc_reports = "../01.qc/fastq_screen_r2",
+        report = "multiqc_r2_fastq_screen_report.html",
+        title = "r2-fastq-screen-multiqc-report",
+    log:
+        "../logs/01.multiqc/multiqc-fastq-screen-r2.log",
+    benchmark:
+        "../benchmarks/fastqc_multiqc-fastq-screen-r2_benchmark.txt",
+    shell:
+        """
+        multiqc {params.fastqc_reports} \
+                --outdir {output.report_dir} \
+                -i {params.title} \
+                -n {params.report} &> {log}
         """
 # ----- rule ----- #

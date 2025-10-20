@@ -155,7 +155,8 @@ rule qualimap_qc:
     input:
         bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
-        qualimap_report_html = '../02.mapping/qualimap_report/{sample}_qualimap_report.html',
+        qualimap_report_html = '../02.mapping/qualimap_report/{sample}/qualimapReport.html',
+        qualimap_report_txt = '../02.mapping/qualimap_report/{sample}/genome_results.txt',
     conda:
         "../envs/qualimap.yaml",
     message:
@@ -168,7 +169,7 @@ rule qualimap_qc:
         genome_gff = config['qualimap']["genome_gff"],
         outformat = config['qualimap']["format"],
         mem = config['qualimap']["mem"],
-        prefix_dir = '../02.mapping/qualimap_report/',
+        prefix_dir = '../02.mapping/qualimap_report/{sample}/',
     threads: 
         config["threads"]["qualimap"],
     shell:
@@ -178,7 +179,6 @@ rule qualimap_qc:
                  -bam {input.bam} \
                  -gff {params.genome_gff} \
                  -outdir {params.prefix_dir} \
-                 -outfile {output.qualimap_report_html} \
                  -outformat {params.outformat} \
                  --java-mem-size=16G &>{log}
         """

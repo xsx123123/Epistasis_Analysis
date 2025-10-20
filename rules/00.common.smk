@@ -18,9 +18,9 @@ def Epistasis(config:dict = None) -> list:
                     
         ]
     if config['fastq_screen']['run']:
-        WGS_Epistasis.extend(expand("../01.qc/fastq_screen/{sample}_1_screen.txt",
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r1/{sample}_1_screen.txt",
                                           sample=samples.keys()))
-        WGS_Epistasis.extend(expand("../01.qc/fastq_screen/{sample}_2_screen.txt",
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r2/{sample}_2_screen.txt",
                                           sample=samples.keys()))
     # short-read trim & clean result
     WGS_Epistasis.extend(expand("../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
@@ -32,7 +32,9 @@ def Epistasis(config:dict = None) -> list:
     WGS_Epistasis.extend(expand("../01.qc/short_read_trim/{sample}.fastp.json",
                                           sample=samples.keys()))
     WGS_Epistasis.append("../01.qc/multiqc_short_read_trim/")
-
+    WGS_Epistasis.append("../01.qc/fastq_screen_multiqc_r1/")
+    WGS_Epistasis.append("../01.qc/fastq_screen_multiqc_r2/")
+    # mapping result
     WGS_Epistasis.extend(expand("../02.mapping/bwa_mem2/{sample}.sort.bam",
                                            sample=samples.keys()))
     WGS_Epistasis.extend(expand("../02.mapping/bwa_mem2/{sample}.sort.bam.bai",
@@ -45,7 +47,9 @@ def Epistasis(config:dict = None) -> list:
                                            sample=samples.keys())) 
     WGS_Epistasis.extend(expand('../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt',
                                            sample=samples.keys())) 
-    WGS_Epistasis.extend(expand('../02.mapping/qualimap_report/{sample}_qualimap_report.html',
+    WGS_Epistasis.extend(expand('../02.mapping/qualimap_report/{sample}/qualimapReport.html',
+                                           sample=samples.keys())) 
+    WGS_Epistasis.extend(expand('../02.mapping/qualimap_report/{sample}/genome_results.txt',
                                            sample=samples.keys())) 
     WGS_Epistasis.extend(expand('../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv',
                                            sample=samples.keys())) 
