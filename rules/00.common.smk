@@ -18,9 +18,9 @@ def Epistasis(config:dict = None) -> list:
                     
         ]
     if config['fastq_screen']['run']:
-        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r1/{sample}_1_screen.txt",
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r1/{sample}_R1_screen.txt",
                                           sample=samples.keys()))
-        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r2/{sample}_2_screen.txt",
+        WGS_Epistasis.extend(expand("../01.qc/fastq_screen_r2/{sample}_R2_screen.txt",
                                           sample=samples.keys()))
     # short-read trim & clean result
     WGS_Epistasis.extend(expand("../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
@@ -59,7 +59,7 @@ def Epistasis(config:dict = None) -> list:
     WGS_Epistasis.extend(expand('../03.call_variant/{sample}.vcf.gz',
                                            sample=samples.keys()))
     if config['print_target']:
-        rich_print(WGS_Epistasis)
+        logger.info(WGS_Epistasis)
     return  WGS_Epistasis
     
 def judge_bwa_index(config:dict = None) -> bool:

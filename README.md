@@ -48,5 +48,12 @@ snakemake --use-conda --conda-cleanup-envs
 # Runing the snakemake pipeline via mamba
 snakemake --cores=50 -p --conda-frontend mamba --use-conda
 ```
+
+
+```bash
+# 测试 & 开发模式
+snakemake --dry-run
+```
+
 ---
 ## Reference

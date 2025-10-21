@@ -9,7 +9,7 @@ rule short_read_fastq_screen_r1:
                           "{sample}",
                           "{sample}" + config['r1_suffix']),
     output:
-        fastq_screen_result = "../01.qc/fastq_screen_r1/{sample}_1_screen.txt",
+        fastq_screen_result = "../01.qc/fastq_screen_r1/{sample}_R1_screen.txt",
     log:
         "../logs/01.short_read_qc_r1/{sample}.r1.fastq_screen.log",
     params:
@@ -42,7 +42,7 @@ rule short_read_fastq_screen_r2:
                           "{sample}",
                           "{sample}" + config['r2_suffix']),
     output:
-        fastq_screen_result = "../01.qc/fastq_screen_r2/{sample}_2_screen.txt",
+        fastq_screen_result = "../01.qc/fastq_screen_r2/{sample}_R2_screen.txt",
     log:
         "../logs/01.short_read_qc_r2/{sample}.r2.fastq_screen.log",
     params:
@@ -69,7 +69,7 @@ rule short_read_fastq_screen_r2:
 
 rule fastq_screen_multiqc_r1:
     input:
-        fastqc_files_r1 = expand("../01.qc/fastq_screen_r1/{sample}_1_screen.txt", sample=samples.keys()),
+        fastqc_files_r1 = expand("../01.qc/fastq_screen_r1/{sample}_R1_screen.txt", sample=samples.keys()),
     output:
         report_dir = directory("../01.qc/fastq_screen_multiqc_r1/")
     conda:
@@ -94,7 +94,7 @@ rule fastq_screen_multiqc_r1:
 
 rule fastq_screen_multiqc_r2:
     input:
-        fastqc_files_r1 = expand("../01.qc/fastq_screen_r2/{sample}_2_screen.txt", sample=samples.keys()),
+        fastqc_files_r1 = expand("../01.qc/fastq_screen_r2/{sample}_R2_screen.txt", sample=samples.keys()),
     output:
         report_dir = directory("../01.qc/fastq_screen_multiqc_r2/")
     conda:
