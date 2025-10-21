@@ -56,10 +56,17 @@ def Epistasis(config:dict = None) -> list:
     WGS_Epistasis.extend(expand('../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
                                            sample=samples.keys())) 
     # Call Variant
-    WGS_Epistasis.extend(expand('../03.call_variant/{sample}.vcf.gz',
+    WGS_Epistasis.extend(expand('../03.call_variant/{sample}.raw.vcf.gz',
                                            sample=samples.keys()))
+    WGS_Epistasis.append("../03.call_variant/variant_stats_multiqc/")
+    WGS_Epistasis.append('../03.call_variant/merge.vcf.gz')
+    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.vcf.gz')
+    # annotation vcf
+    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.csv')
+    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.html')
+    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.vcf')       
     if config['print_target']:
-        logger.info(WGS_Epistasis)
+       rich_print(WGS_Epistasis)
     return  WGS_Epistasis
     
 def judge_bwa_index(config:dict = None) -> bool:

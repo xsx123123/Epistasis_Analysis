@@ -19,6 +19,10 @@ fastq_screen:
 bcftools:
   path: /home/jzhang/software/bcftools-1.22/bcftools
   reference: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
+snpEff:
+  path: /home/jzhang/.local/share/mamba/envs/snpEff/bin/snpEff
+  config: /data/jzhang/reference/snpEff_database/snpEff.config
+  genome_name: Lactuca_sativa_V11
 # software
 software:
   sambamba: /home/jzhang/software/tools/sambamba-1.0.1
@@ -41,6 +45,7 @@ threads:
   samtools_stats: 10
   fastq_screen: 10
   bcftools: 10
+  snpEff: 1
 # other parameter
 print_target: true
 log_level: INFO
