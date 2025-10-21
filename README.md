@@ -3,8 +3,7 @@
 ***Version : 1.0v***
 # Epistasis Analysis
 ## Introduction
-
-
+`Epistasis Analysis`项目是基于WGS+RNA数据对群体中存在的上位性进行研究的代码仓库
 ## Workflow
 ### Quality control
 `md5_checker_rs`
@@ -27,7 +26,20 @@ Options:
 
 示例: md5_checker_rs /path/to/data1 /path/to/data2 -f checksums.txt -t 16 -o report.tsv
 ```
-### Run snakemake pipeline
+## Run snakemake pipeline
+
+### Install `snakemake=9.9.0`
+```bash
+# fix conda channel_priority -> flexible
+conda config --set channel_priority flexible
+# Create snakemake conda environment and install snakemak
+conda create -n snakemake
+# activate snakemake
+conda activate snakemake
+# install snakemake=9.9.0
+conda install bioconda::snakemake=9.9.0
+```
+### Deployment Snakemake analysis environment via mamba & run pipeline
 ```bash
 # Creating conda environments via mamba
 snakemake --use-conda --conda-create-envs-only --conda-frontend mamba
@@ -36,3 +48,12 @@ snakemake --use-conda --conda-cleanup-envs
 # Runing the snakemake pipeline via mamba
 snakemake --cores=50 -p --conda-frontend mamba --use-conda
 ```
+
+
+```bash
+# 测试 & 开发模式
+snakemake --dry-run
+```
+
+---
+## Reference

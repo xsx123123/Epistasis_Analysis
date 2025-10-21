@@ -1,27 +1,32 @@
 #!/usr/bin/snakemake
 # -*- coding: utf-8 -*-
 import os
+from loguru import logger
 # ----- rule ----- #
-if config["bwa_index"] == False:
+if judge_bwa_index(config = config) == True:
+    logger.info(f"Epistasis Analysis pipeline will rebuild BWA index")
     rule build_bwa_index:
         input:
             genome = config["genome"],
         output:
-            config["bwa_index_path"] + ".amb",
-            config["bwa_index_path"] + ".ann",
-            config["bwa_index_path"] + ".bwt",
-            config["bwa_index_path"] + ".pac",
-            config["bwa_index_path"] + ".sa"
+            config["bwa_mem2"]["index"] + '.0123',
+            config["bwa_mem2"]["index"] + '.amb',
+            config["bwa_mem2"]["index"] + '.ann',
+            config["bwa_mem2"]["index"] + '.bwt.2bit.64',
+            config["bwa_mem2"]["index"] + '.pac',
+            config["bwa_mem2"]["index"] + '.alt',
+        conda:
+            "../envs/bwa2.yaml", 
         log:
             "logs/02.mapping/bwa_mem2.log"
         message:
-            "Building BWA index for {input.genome}"
-        conda:
-            "../envs/bwa2.yaml",
+            "Building BWA-mem2 index for {input.genome}",
+        benchmark:
+            "../benchmarks/BWA-mem2_index_benchmark.txt",
         shell:
             """
             bwa-mem2 index \
-                     -p {config[bwa_index_path]} \
+                     -p {config["bwa_mem2"]["index"]} \
                       {input.genome} 2>{log}
             """
 
@@ -30,24 +35,27 @@ rule bwa_mapping:
         r1 = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
         r2 = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
     output:
-        bam = '../02.mapping/bwa_mem2/{sample}.bam',
+        bam = temp('../02.mapping/bwa_mem2/{sample}.bam') if config['bam_remove'] else '../02.mapping/bwa_mem2/{sample}.bam',
     conda:
         "../envs/bwa2.yaml",
     log:
         "../logs/02.mapping/bwa_mem2_{sample}.log",
     message:
         "Running bwa-mem2 mapping on {input.r1} and {input.r2}",
+    benchmark:
+            "../benchmarks/{sample}_bwa_mem2_benchmark.txt",
     params:
         index = config["bwa_mem2"]["index"],
+        pl = config["bwa_mem2"]["PL"],
     threads: 
         config["threads"]["bwa_mem2"],
     shell:
         """
-        bwa-mem2 mem -t {threads} \
-        -R '@RG\tID:{wildcards.sample}\tSM:{wildcards.sample}\tPL:ILLUMINA\tLB:{wildcards.sample}' \
+        ( bwa-mem2 mem -t {threads} \
+        -R '@RG\tID:{wildcards.sample}\tSM:{wildcards.sample}\tPL:{params.pl}\tLB:{wildcards.sample}' \
         {params.index} \
         {input.r1} {input.r2} | samtools view -@ {threads} \
-        -Sbh -o {output.bam} 2>{log}
+        -Sbh -o {output.bam} ) 2>{log}
         """
 
 rule sort_index:
@@ -58,8 +66,12 @@ rule sort_index:
         sort_bam_bai = '../02.mapping/bwa_mem2/{sample}.sort.bam.bai',
     conda:
         "../envs/bwa2.yaml",
+    message:
+        "Running samtools sort & index for {input.bam}",
     log:
         "../logs/02.mapping/bwa_sort_index_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_bam_sort_index_benchmark.txt",
     threads: 
         config["threads"]["samtools"],
     shell:
@@ -75,13 +87,17 @@ rule sambamba_MarkDuplicates:
         duplicates_bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     log:
         "../logs/02.mapping/duplicates_{sample}.log",
+    message:
+        "Running BAM MarkDuplicates for {input.bam}",
+    benchmark:
+            "../benchmarks/{sample}_bam_MarkDuplicates_benchmark.txt",
     params:
         sambamba = config['software']['sambamba']
     threads: 8
     shell:
         """
         {params.sambamba} markdup \
-                          --nthreads=NTHREADS {threads} \
+                          --nthreads {threads} \
                           --show-progress \
                           {input.bam} \
                           {output.duplicates_bam} 2>{log}
@@ -94,8 +110,12 @@ rule Duplicates_bam_index:
         duplicates_bam_bai = '../02.mapping/bwa_mem2/{sample}.dup.bam.bai',
     conda:
         "../envs/bwa2.yaml",
+    message:
+        "Running build index for MarkDuplicates of BAM {input.bam}",
     log:
         "../logs/02.mapping/Duplicates_bam_index_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_Dup_bam_index_benchmark.txt",
     threads: 
         config["threads"]["samtools"],
     shell:
@@ -111,8 +131,12 @@ rule bam_coverage:
         summary = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt",
     conda:
         "../envs/mosdepth.yaml",
+    message:
+        "Running Coverage for MarkDuplicates of BAM : {input.bam}",
     log:
         "../logs/02.mapping/bam_coverage_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_Dup_bam_coverage_benchmark.txt",
     params:
         prefix = "../02.mapping/mosdepth_coverage/{sample}"
     threads: 
@@ -131,15 +155,21 @@ rule qualimap_qc:
     input:
         bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
-        qualimap_report_html = '../02.mapping/qualimap_report/{sample}_qualimap_report.html',
+        qualimap_report_html = '../02.mapping/qualimap_report/{sample}/qualimapReport.html',
+        qualimap_report_txt = '../02.mapping/qualimap_report/{sample}/genome_results.txt',
     conda:
         "../envs/qualimap.yaml",
+    message:
+        "Running qualimap qc for MarkDuplicates of BAM : {input.bam}",
     log:
         "../logs/02.mapping/qualimap_report_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_Dup_bam_qualimap_benchmark.txt",
     params:
         genome_gff = config['qualimap']["genome_gff"],
         outformat = config['qualimap']["format"],
-        prefix_dir = '../02.mapping/qualimap_report/',
+        mem = config['qualimap']["mem"],
+        prefix_dir = '../02.mapping/qualimap_report/{sample}/',
     threads: 
         config["threads"]["qualimap"],
     shell:
@@ -149,8 +179,8 @@ rule qualimap_qc:
                  -bam {input.bam} \
                  -gff {params.genome_gff} \
                  -outdir {params.prefix_dir} \
-                 -outfile {output.qualimap_report_html} \
-                 -outformat {params.outformat} 2>{log}
+                 -outformat {params.outformat} \
+                 --java-mem-size=16G &>{log}
         """
 
 rule samtools_flagst:
@@ -160,8 +190,12 @@ rule samtools_flagst:
         samtools_flagstat = '../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv',
     conda:
         "../envs/bwa2.yaml",
+    message:
+        "Running flagst for MarkDuplicates of BAM : {input.bam}",
     log:
         "../logs/02.mapping/bam_dup_lagstat_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_Dup_bam_lagstat_benchmark.txt",
     threads: 
         config["threads"]["samtools_flagstat"],
     shell:
@@ -179,8 +213,12 @@ rule samtools_stats:
         samtools_stats = '../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
     conda:
         "../envs/bwa2.yaml",
+    message:
+        "Running stats for MarkDuplicates of BAM : {input.bam}",
     log:
         "../logs/02.mapping/bam_dup_stats_{sample}.log",
+    benchmark:
+            "../benchmarks/{sample}_Dup_bam_stats_benchmark.txt",
     threads: 
         config["threads"]["samtools_stats"],
     params:
