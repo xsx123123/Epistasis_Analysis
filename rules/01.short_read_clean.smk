@@ -5,14 +5,6 @@ import os
 rule short_read_fastp:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        r1 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),
-        r2 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r2_suffix']),
     output:
         r1_trimmed = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
         r2_trimmed = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
@@ -23,18 +15,26 @@ rule short_read_fastp:
     log:
         "../logs/01.short_read_trim/{sample}.fastp.log",
     message:
-        "Running Fastp on {input.r1} and {input.r2}",
+        "Running Fastp on {wildcards.sample} r1 and {wildcards.sample} r2",
     benchmark:
         "../benchmarks/{sample}_fastp_benchmark.txt",
     params:
         length_required = config["trim"]["length_required"],
         quality_threshold = config["trim"]["quality_threshold"],
         adapter_fasta = config["trim"]["adapter_fasta"],
+        r1 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r1_suffix']),
+        r2 = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r2_suffix']),
     threads: 
         config["threads"]["fastp"],
     shell:
         """
-        fastp -i {input.r1} -I {input.r2} \
+        fastp -i {params.r1} -I {params.r2} \
               -o {output.r1_trimmed} -O {output.r2_trimmed} \
               --thread {threads} \
               --length_required  {params.length_required} \
