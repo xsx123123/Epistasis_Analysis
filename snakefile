@@ -19,6 +19,7 @@ include: 'rules/01.Contamination_check.smk'
 include: 'rules/01.short_read_clean.smk'
 include: 'rules/02.mapping.smk'
 include: 'rules/03.callvraiant.smk'
+include: 'rules/F.multi_merge_qc.smk'
 # --------- target rule --------- #
 rule all:
     input:

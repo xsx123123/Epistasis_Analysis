@@ -8,8 +8,6 @@ rule call_variant_by_bcftools:
         bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
     output:
         vcf = '../03.call_variant/{sample}.raw.vcf.gz',
-    message:
-        "Running bcftools mpileup & bcftools call on the sorted and duplicate marked BAM : {input.bam}",
     log:
         "../logs/03.call_variant/{sample}_variant.log",
     benchmark:
@@ -19,13 +17,20 @@ rule call_variant_by_bcftools:
     params:
         reference = config["bcftools"]['reference'],
         path = config["bcftools"]['path'],
+        ploidy = config["bcftools"]['ploidy'],
+        verbosity = config["bcftools"]['verbosity'],
+    message:
+        " Running bcftools mpileup & bcftools call (Predefined ploidy:{params.ploidy}) on the sorted and duplicate marked BAM : {input.bam}",
     shell:
         """
         {params.path} mpileup \
                  --threads {threads} \
+                 --verbosity {params.verbosity} \
                  -f {params.reference} \
                  {input.bam} | {params.path} call \
                  --threads {threads} \
+                 --ploidy {params.ploidy} \
+                 --verbosity {params.verbosity} \
                  -mv -Oz -o {output.vcf} &>{log}
         """
 
@@ -48,7 +53,7 @@ rule sort_index_bcftools:
         path = config["bcftools"]['path'],
     shell:
         """
-        ( {params.path} sort --threads {threads} \
+        ( {params.path} sort \
           {input.vcf} -O z -o {output.sort_vcf}  && \
           {params.path} index --threads {threads} \
           -t {output.sort_vcf} -o {output.sort_vcf_tbi_index} && \
@@ -78,7 +83,7 @@ rule merg_vcf:
         """
         ( {params.path} merge --threads {threads} \
           {input.vcf_list} -O z -o {output.merge_vcf}  && \
-          {params.path} sort --threads {threads} \
+          {params.path} sort \
           {output.merge_vcf} -O z -o {output.merge_sort_vcf} && \
           {params.path} index --threads {threads} \
           -t {output.merge_sort_vcf} -o {output.merge_tbi_index_vcf} && \

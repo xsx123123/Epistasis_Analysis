@@ -64,7 +64,11 @@ def Epistasis(config:dict = None) -> list:
     # annotation vcf
     WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.csv')
     WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.html')
-    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.vcf')       
+    WGS_Epistasis.append('../03.call_variant/merge_filter.sort.annotation.vcf') 
+    # Report
+    WGS_Epistasis.append('../F.report/Data_QC_report/Data_QC_report.html') 
+    WGS_Epistasis.append('../F.report/Mapping_QC_report/Mapping_QC_report.html') 
+    WGS_Epistasis.append("../F.report/Mapping_QC_report/Variant_Stats_report.html") 
     if config['print_target']:
        rich_print(WGS_Epistasis)
     return  WGS_Epistasis

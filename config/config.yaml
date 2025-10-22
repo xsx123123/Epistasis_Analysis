@@ -19,6 +19,8 @@ fastq_screen:
 bcftools:
   path: /home/jzhang/software/bcftools-1.22/bcftools
   reference: /data/jzhang/reference/Lactuca_sativa_V11/Lsat_Salinas_v11.genome.fasta
+  ploidy: 2
+  verbosity: 3
 snpEff:
   path: /home/jzhang/.local/share/mamba/envs/snpEff/bin/snpEff
   config: /data/jzhang/reference/snpEff_database/snpEff.config
