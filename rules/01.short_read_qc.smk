@@ -5,6 +5,7 @@ import os
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
+        link_r1_dir = '../00.link_dir/{sample}/{sample}_R1.fq.gz',
     output:
         r1_html = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.html",
         r1_zip = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.zip",
@@ -14,10 +15,7 @@ rule short_read_qc_r1:
         r1 = "../logs/01.short_read_qc_r1/{sample}.r1.fastqc.log",
     params:
         out_dir = "../01.qc/short_read_qc_r1/",
-        r1 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),
+        r1 = "../00.link_dir/{sample}/{sample}_R1.fq.gz",
     message:
         "Running FastQC on {wildcards.sample} r1",
     benchmark:
@@ -33,6 +31,7 @@ rule short_read_qc_r1:
 rule short_read_qc_r2:
     input:
         md5_check = "../01.qc/md5_check.tsv",
+        link_r2_dir = '../00.link_dir/{sample}/{sample}_R2.fq.gz',
     output:
         r2_html = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.html",
         r2_zip = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip",
@@ -42,10 +41,7 @@ rule short_read_qc_r2:
         r2 = "../logs/01.short_read_qc_r2/{sample}.r2.fastqc.log",
     params:
         out_dir = "../01.qc/short_read_qc_r2",
-        r2 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r2_suffix']),
+        r2 = "../00.link_dir/{sample}/{sample}_R2.fq.gz",
     message:
         "Running FastQC on {wildcards.sample} r2",
     benchmark:
@@ -63,13 +59,14 @@ rule short_read_multiqc_r1:
     input:
         fastqc_files_r1 = expand("../01.qc/short_read_qc_r1/{sample}_R1_fastqc.zip", sample=samples.keys()),
     output:
-        report_dir = directory("../01.qc/short_read_r1_multiqc/")
+        report_dir = "../01.qc/short_read_r1_multiqc/multiqc_r1_raw-data_report.html",
     conda:
         "../envs/multiqc.yaml",
     message:
         "Running MultiQC to aggregate R1 FastQC reports",
     params:
         fastqc_reports = "../01.qc/short_read_qc_r1",
+        multiqc_dir = '../01.qc/short_read_qc_r1/',
         report = "multiqc_r1_raw-data_report.html",
         title = "r1-raw-data-multiqc-report",
     log:
@@ -79,7 +76,7 @@ rule short_read_multiqc_r1:
     shell:
         """
         multiqc {params.fastqc_reports} \
-                --outdir {output.report_dir} \
+                --outdir {params.multiqc_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
         """
@@ -89,13 +86,14 @@ rule short_read_multiqc_r2:
     input:
         fastqc_files_r2 = expand("../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip", sample=samples.keys()),
     output:
-        report_dir = directory("../01.qc/short_read_r2_multiqc/")
+        report_dir = "../01.qc/short_read_r2_multiqc/multiqc_r2_raw-data_report.html",
     conda:
         "../envs/multiqc.yaml",
     message:
         "Running MultiQC to aggregate R2 FastQC reports",
     params:
         fastqc_reports = "../01.qc/short_read_qc_r2",
+        multiqc_dir = '../01.qc/short_read_qc_r2/',
         report = "multiqc_r2_raw-data_report.html",
         title = "r2-raw-data-multiqc-report",
     log:
@@ -105,7 +103,7 @@ rule short_read_multiqc_r2:
     shell:
         """
         multiqc {params.fastqc_reports} \
-                --outdir {output.report_dir} \
+                --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
         """

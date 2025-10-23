@@ -32,6 +32,10 @@ rule check_md5:
         md5_check_json = os.path.join(config['raw_data_path'],config['convert_md5'],"raw_data_md5.json"),
     output:
         md5_check = "../01.qc/md5_check.tsv",
+        link_r1 = expand("../00.link_dir/{sample}/{sample}_R1.fq.gz",
+                         sample=samples.keys()),
+        link_r2 = expand("../00.link_dir/{sample}/{sample}_R2.fq.gz",
+                         sample=samples.keys()), 
     message:
         "Running md5 check on raw data files on {input.md5_check_json}",
     benchmark:
@@ -51,3 +55,4 @@ rule check_md5:
                 -o {output.md5_check} \
                 --log-file {params.log_file} &> {log}
         """
+# ------- rule ------- #

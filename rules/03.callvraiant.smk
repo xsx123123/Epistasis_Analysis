@@ -5,7 +5,7 @@ from loguru import logger
 # ----- rule ----- #
 rule call_variant_by_bcftools:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
         vcf = '../03.call_variant/{sample}.raw.vcf.gz',
     log:

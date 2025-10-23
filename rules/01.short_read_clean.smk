@@ -5,15 +5,17 @@ import os
 rule short_read_fastp:
     input:
         md5_check = "../01.qc/md5_check.tsv",
+        link_r1_dir = '../00.link_dir/{sample}/{sample}_R1.fq.gz',
+        link_r2_dir = '../00.link_dir/{sample}/{sample}_R2.fq.gz',
     output:
-        r1_trimmed = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
-        r2_trimmed = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
-        html_report = "../01.qc/short_read_trim/{sample}.fastp.html",
-        json_report = "../01.qc/short_read_trim/{sample}.fastp.json",
+        r1_trimmed = "../01.qc/short_read_trim/{sample}.R1.trimed.fq.gz",
+        r2_trimmed = "../01.qc/short_read_trim/{sample}.R2.trimed.fq.gz",
+        html_report = "../01.qc/short_read_trim/{sample}.trimed.html",
+        json_report = "../01.qc/short_read_trim/{sample}.trimed.json",
     conda:
         "../envs/fastp.yaml",
     log:
-        "../logs/01.short_read_trim/{sample}.fastp.log",
+        "../logs/01.short_read_trim/{sample}.trimed.log",
     message:
         "Running Fastp on {wildcards.sample} r1 and {wildcards.sample} r2",
     benchmark:
@@ -22,19 +24,11 @@ rule short_read_fastp:
         length_required = config["trim"]["length_required"],
         quality_threshold = config["trim"]["quality_threshold"],
         adapter_fasta = config["trim"]["adapter_fasta"],
-        r1 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),
-        r2 = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r2_suffix']),
     threads: 
         config["threads"]["fastp"],
     shell:
         """
-        fastp -i {params.r1} -I {params.r2} \
+        fastp -i {input.link_r1_dir} -I {input.link_r2_dir} \
               -o {output.r1_trimmed} -O {output.r2_trimmed} \
               --thread {threads} \
               --length_required  {params.length_required} \
@@ -48,9 +42,14 @@ rule short_read_fastp:
 rule multiqc_trim:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        fastp_report = expand("../01.qc/short_read_trim/{sample}.fastp.html", sample=samples.keys()),
+        r1_trimmed = expand("../01.qc/short_read_trim/{sample}.R1.trimed.fq.gz",
+                            sample=samples.keys()),
+        r2_trimmed = expand("../01.qc/short_read_trim/{sample}.R2.trimed.fq.gz",
+                            sample=samples.keys()),
+        fastp_report = expand("../01.qc/short_read_trim/{sample}.trimed.html",
+                              sample=samples.keys()),
     output:
-        report_dir = directory("../01.qc/multiqc_short_read_trim/")
+        report = '../01.qc/multiqc_short_read_trim/multiqc_short_read_trim_report.html',
     conda:
         "../envs/multiqc.yaml",
     message:
@@ -59,6 +58,7 @@ rule multiqc_trim:
         "../benchmarks/multiqc_fastp_benchmark.txt",
     params:
         fastqc_reports = "../01.qc/short_read_trim/",
+        report_dir = "../01.qc/multiqc_short_read_trim/",
         report = "multiqc_short_read_trim_report.html",
         title = "short_read_trim-multiqc-report",
     log:
@@ -66,7 +66,7 @@ rule multiqc_trim:
     shell:
         """
         multiqc {params.fastqc_reports} \
-                --outdir {output.report_dir} \
+                --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
         """

@@ -32,16 +32,16 @@ if judge_bwa_index(config = config) == True:
 
 rule bwa_mapping:
     input:
-        r1 = "../01.qc/short_read_trim/{sample}.R1.fastp.fq.gz",
-        r2 = "../01.qc/short_read_trim/{sample}.R2.fastp.fq.gz",
+        r1 = "../01.qc/short_read_trim/{sample}.R1.trimed.fq.gz",
+        r2 = "../01.qc/short_read_trim/{sample}.R2.trimed.fq.gz",
     output:
-        bam = temp('../02.mapping/bwa_mem2/{sample}.bam') if config['bam_remove'] else '../02.mapping/bwa_mem2/{sample}.bam',
+        bam = '../02.mapping/bwa_mem2/temp/{sample}.raw.bam',
     conda:
         "../envs/bwa2.yaml",
     log:
         "../logs/02.mapping/bwa_mem2_{sample}.log",
     message:
-        "Running bwa-mem2 mapping on {input.r1} and {input.r2}",
+        "Running bwa-mem2 mapping on {sample} R1 and R2",
     benchmark:
             "../benchmarks/{sample}_bwa_mem2_benchmark.txt",
     params:
@@ -60,14 +60,14 @@ rule bwa_mapping:
 
 rule sort_index:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.bam',
+        bam = '../02.mapping/bwa_mem2/temp/{sample}.raw.bam',
     output:
-        sort_bam = '../02.mapping/bwa_mem2/{sample}.sort.bam',
-        sort_bam_bai = '../02.mapping/bwa_mem2/{sample}.sort.bam.bai',
+        sort_bam = '../02.mapping/bwa_mem2/sort_index/{sample}.sort.bam',
+        sort_bam_bai = '../02.mapping/bwa_mem2/sort_index/{sample}.sort.bam.bai',
     conda:
         "../envs/bwa2.yaml",
     message:
-        "Running samtools sort & index for {input.bam}",
+        "Running samtools sort & index for {sample}",
     log:
         "../logs/02.mapping/bwa_sort_index_{sample}.log",
     benchmark:
@@ -82,9 +82,9 @@ rule sort_index:
 
 rule sambamba_MarkDuplicates:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.sort.bam',
+        bam = '../02.mapping/bwa_mem2/sort_index/{sample}.sort.bam',
     output:
-        duplicates_bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        duplicates_bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     log:
         "../logs/02.mapping/duplicates_{sample}.log",
     message:
@@ -105,9 +105,9 @@ rule sambamba_MarkDuplicates:
 
 rule Duplicates_bam_index:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
-        duplicates_bam_bai = '../02.mapping/bwa_mem2/{sample}.dup.bam.bai',
+        duplicates_bam_bai = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam.bai',
     conda:
         "../envs/bwa2.yaml",
     message:
@@ -125,7 +125,7 @@ rule Duplicates_bam_index:
 
 rule bam_coverage:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
         dist = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.txt",
         summary = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt",
@@ -153,7 +153,7 @@ rule bam_coverage:
 
 rule qualimap_qc:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
         qualimap_report_html = '../02.mapping/qualimap_report/{sample}/qualimapReport.html',
         qualimap_report_txt = '../02.mapping/qualimap_report/{sample}/genome_results.txt',
@@ -185,7 +185,7 @@ rule qualimap_qc:
 
 rule samtools_flagst:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
         samtools_flagstat = '../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv',
     conda:
@@ -208,7 +208,7 @@ rule samtools_flagst:
 
 rule samtools_stats:
     input:
-        bam = '../02.mapping/bwa_mem2/{sample}.dup.bam',
+        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
     output:
         samtools_stats = '../02.mapping/samtools_stats/{sample}_dup_bam_stats.tsv',
     conda:

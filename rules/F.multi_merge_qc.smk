@@ -7,7 +7,7 @@ rule all_qc_multiqc_report:
         md5_check = "../01.qc/md5_check.tsv",
         fastqc_files_r1 = expand("../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip", sample=samples.keys()),
         fastqc_files_r2 = expand("../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip", sample=samples.keys()),
-        fastp_report = expand("../01.qc/short_read_trim/{sample}.fastp.html", sample=samples.keys()),
+        fastp_report = expand("../01.qc/short_read_trim/{sample}.trimed.html", sample=samples.keys()),
     output:
         report = "../F.report/Data_QC_report/Data_QC_report.html"
     conda:
@@ -17,7 +17,7 @@ rule all_qc_multiqc_report:
     benchmark:
         "../benchmarks/all_qc_multiqc_report_benchmark.txt",
     params:
-        report_dir = "../F.report/Data_QC_report/"
+        report_dir = "../F.report/Data_QC_report/",
         fastqc_reports = "../01.qc/",
         report = "Data_QC_report.html",
         title = "Data_QC_report",

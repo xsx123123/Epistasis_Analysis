@@ -56,3 +56,4 @@ convert_md5: 'link_dir'
 r1_suffix: _R1.fq.gz
 r2_suffix: _R2.fq.gz
 md5: MD5.txt
+print_sample: false
