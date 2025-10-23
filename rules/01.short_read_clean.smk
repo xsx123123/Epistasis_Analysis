@@ -5,8 +5,14 @@ import os
 rule short_read_fastp:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r1_dir = '../00.link_dir/{sample}/{sample}_R1.fq.gz',
-        link_r2_dir = '../00.link_dir/{sample}/{sample}_R2.fq.gz',
+        link_r1_dir = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r1_suffix']),
+        link_r2_dir = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r2_suffix']),
     output:
         r1_trimmed = "../01.qc/short_read_trim/{sample}.R1.trimed.fq.gz",
         r2_trimmed = "../01.qc/short_read_trim/{sample}.R2.trimed.fq.gz",

@@ -5,7 +5,10 @@ import os
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r1_dir = '../00.link_dir/{sample}/{sample}_R1.fq.gz',
+        link_r1_dir = os.path.join(config["raw_data_path"],
+                          config['convert_md5'],
+                          "{sample}",
+                          "{sample}" + config['r1_suffix']),
     output:
         r1_html = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.html",
         r1_zip = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.zip",
@@ -23,7 +26,7 @@ rule short_read_qc_r1:
     threads: 1
     shell:
         """
-        fastqc {params.r1} \
+        fastqc {input.link_r1_dir} \
                -o {params.out_dir} \
                --threads {threads} &> {log.r1}
         """
@@ -31,7 +34,10 @@ rule short_read_qc_r1:
 rule short_read_qc_r2:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r2_dir = '../00.link_dir/{sample}/{sample}_R2.fq.gz',
+        link_r2_dir = os.path.join(config["raw_data_path"],
+                            config['convert_md5'],
+                            "{sample}",
+                            "{sample}" + config['r2_suffix']),
     output:
         r2_html = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.html",
         r2_zip = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip",
@@ -49,7 +55,7 @@ rule short_read_qc_r2:
     threads: 1
     shell:
         """
-        fastqc {params.r2} \
+        fastqc {input.link_r2_dir} \
                -o {params.out_dir} \
                --threads {threads} &> {log.r2}
         """
