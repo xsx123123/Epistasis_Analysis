@@ -4,19 +4,11 @@ import os
 # ------- rule ------- #
 rule seq_preprocessor:
     input:
-        md5 = expand(os.path.join(config['raw_data_path'], '{sample}'),
-                     sample=samples.keys()),
+        md5 = expand(os.path.join(config['raw_data_path'],
+                    '{sample}'),sample=samples.keys()),
     output:
         md5_check = directory(os.path.join(config['raw_data_path'],config['convert_md5'])),
         md5_check_json = os.path.join(config['raw_data_path'],config['convert_md5'],"raw_data_md5.json"),
-        link_r1 = expand(os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),sample=samples.keys()),
-        link_r2 = expand(os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r2_suffix']),sample=samples.keys()),
     message:
         "Running seq_preprocessor on raw data data",
     benchmark:
@@ -37,15 +29,17 @@ rule seq_preprocessor:
 
 rule check_md5:
     input:
-        md5_check_json = os.path.join(config['raw_data_path'],config['convert_md5'],"raw_data_md5.json"),
-        link_r1 = expand(os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),sample=samples.keys()),
-        link_r2 = expand(os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r2_suffix']),sample=samples.keys()),
+        md5_check_json = os.path.join(config['raw_data_path'],
+                                      config['convert_md5'],
+                                      "raw_data_md5.json"),
+        link_r1 = expand(os.path.join(config['raw_data_path'],
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R1.fq.gz"),
+                                      sample=samples.keys()),
+        link_r2 = expand(os.path.join(config['raw_data_path'],
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R2.fq.gz"),
+                                      sample=samples.keys()),
     output:
         md5_check = "../01.qc/md5_check.tsv",
     message:

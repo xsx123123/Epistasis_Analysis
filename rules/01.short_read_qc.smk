@@ -5,10 +5,10 @@ import os
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r1_dir = os.path.join(config["raw_data_path"],
-                          config['convert_md5'],
-                          "{sample}",
-                          "{sample}" + config['r1_suffix']),
+        link_r1_dir = expand(os.path.join(config['raw_data_path'],
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R1.fq.gz"),
+                                      sample=samples.keys()),
     output:
         r1_html = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.html",
         r1_zip = "../01.qc/short_read_qc_r1/{sample}_R1_fastqc.zip",
@@ -34,10 +34,10 @@ rule short_read_qc_r1:
 rule short_read_qc_r2:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r2_dir = os.path.join(config["raw_data_path"],
-                            config['convert_md5'],
-                            "{sample}",
-                            "{sample}" + config['r2_suffix']),
+        link_r2_dir = expand(os.path.join(config['raw_data_path'],
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R2.fq.gz"),
+                                      sample=samples.keys()),
     output:
         r2_html = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.html",
         r2_zip = "../01.qc/short_read_qc_r2/{sample}_R2_fastqc.zip",
@@ -72,7 +72,7 @@ rule short_read_multiqc_r1:
         "Running MultiQC to aggregate R1 FastQC reports",
     params:
         fastqc_reports = "../01.qc/short_read_qc_r1",
-        multiqc_dir = '../01.qc/short_read_qc_r1/',
+        multiqc_dir = '../01.qc/short_read_r1_multiqc/',
         report = "multiqc_r1_raw-data_report.html",
         title = "r1-raw-data-multiqc-report",
     log:
@@ -99,7 +99,7 @@ rule short_read_multiqc_r2:
         "Running MultiQC to aggregate R2 FastQC reports",
     params:
         fastqc_reports = "../01.qc/short_read_qc_r2",
-        multiqc_dir = '../01.qc/short_read_qc_r2/',
+        multiqc_dir = '../01.qc/short_read_r2_multiqc/',
         report = "multiqc_r2_raw-data_report.html",
         title = "r2-raw-data-multiqc-report",
     log:
