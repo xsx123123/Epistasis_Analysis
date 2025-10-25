@@ -42,7 +42,7 @@ rule sort_index_bcftools:
         sort_vcf_index = '../03.call_variant/{sample}.sort.vcf.csi',
         sort_vcf_tbi_index = '../03.call_variant/{sample}.sort.vcf.tbi',
     message:
-        "Running bcftools sort & index on vcf : {input.vcf}",
+        "Running bcftools sort & index for sample : {wildcards.sample}",
     log:
         "../logs/03.call_variant/{sample}_variant_sort_index.log",
     benchmark:
@@ -70,7 +70,7 @@ rule merg_vcf:
         merge_index_vcf = '../03.call_variant/merge.sort.vcf.gz.csi',
         merge_tbi_index_vcf = '../03.call_variant/merge.sort.vcf.gz.tbi',
     message:
-        "Running bcftools merge & sort & index on vcf : {input.vcf}",
+        "Running bcftools merge & sort & index on vcf : {input.vcf_list}",
     log:
         "../logs/03.call_variant/merge_variant_sort_index.log",
     benchmark:
@@ -99,7 +99,7 @@ rule merg_vcf_filter:
         filter_index_vcf = '../03.call_variant/merge_filter.sort.vcf.gz.csi',
         filter_tbi_index_vcf = '../03.call_variant/merge_filter.sort.vcf.gz.tbi',
     message:
-        "Running bcftools filter  F_MISSING <= 0.1 && MAF >= 0.05 : {input.vcf}",
+        "Running bcftools filter F_MISSING <= 0.1 && MAF >= 0.05",
     log:
         "../logs/03.call_variant/merge_variant_filter.log",
     benchmark:
@@ -129,7 +129,7 @@ rule SnpEff_annotation:
         annotated_html = '../03.call_variant/merge_filter.sort.annotation.html',
         annotated_vcf = '../03.call_variant/merge_filter.sort.annotation.vcf',
     message:
-        "Running filter vcf annotation : {input.filter_vcf}",
+        "Running call varinat annotation by snpEff",
     log:
         "../logs/03.call_variant/merge_variant_filter_annotation.log",
     benchmark:
@@ -156,7 +156,7 @@ rule variant_stats:
     output:
         stats = '../03.call_variant/variant_stats/{sample}.vcf.stats.txt',
     message:
-        "Running bcftools stats on call variant : {input.vcf}",
+        "Running bcftools stats for {input.vcf} file ",
     log:
         "../logs/03.call_variant/{sample}_variant_stats.log",
     benchmark:

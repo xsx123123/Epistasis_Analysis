@@ -11,10 +11,9 @@ rule short_read_fastq_screen_r1:
         "../logs/01.short_read_qc_r1/{sample}.r1.fastq_screen.log",
     params:
         out_dir = "../01.qc/fastq_screen_r1/",
-        link_r1_dir = expand(os.path.join(config['raw_data_path'],
+        link_r1_dir = os.path.join(config['raw_data_path'],
                                       config['convert_md5'],
                                       "{sample}/{sample}_R1.fq.gz"),
-                                      sample=samples.keys()),
         fastq_screen_dir = config['fastq_screen']['path'],
         conf = config['fastq_screen']['conf'],
         subset = config[ 'fastq_screen']['subset'],
@@ -48,10 +47,9 @@ rule short_read_fastq_screen_r2:
         conf = config['fastq_screen']['conf'],
         subset = config['fastq_screen']['subset'],
         aligner = config['fastq_screen']['aligner'],
-        link_r2_dir = expand(os.path.join(config['raw_data_path'],
+        link_r2_dir = os.path.join(config['raw_data_path'],
                                       config['convert_md5'],
                                       "{sample}/{sample}_R2.fq.gz"),
-                                      sample=samples.keys()),
     message:
         "Running fastq_screen on {wildcards.sample} r2",
     benchmark:

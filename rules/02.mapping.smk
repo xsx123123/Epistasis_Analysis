@@ -41,7 +41,7 @@ rule bwa_mapping:
     log:
         "../logs/02.mapping/bwa_mem2_{sample}.log",
     message:
-        "Running bwa-mem2 mapping on {sample} R1 and R2",
+        "Running bwa-mem2 mapping on {wildcards.sample} R1 and R2",
     benchmark:
             "../benchmarks/{sample}_bwa_mem2_benchmark.txt",
     params:
@@ -67,7 +67,7 @@ rule sort_index:
     conda:
         "../envs/bwa2.yaml",
     message:
-        "Running samtools sort & index for {sample}",
+        "Running samtools sort & index for {wildcards.sample}",
     log:
         "../logs/02.mapping/bwa_sort_index_{sample}.log",
     benchmark:
