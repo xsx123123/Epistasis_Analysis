@@ -38,9 +38,10 @@ struct RenamingReportEntry {
 #[command(name = "seq_preprocessor")]
 #[command(about = "自动整理不同来源的测序数据，统一命名和目录结构。")]
 struct Cli {
-    /// 原始数据所在的根目录路径
-    #[arg(short, long)]
-    input: PathBuf,
+    // --- 【RUST 修改 1/3】: 修改 Cli 结构体以接受多个输入 ---
+    /// 原始数据所在的根目录路径 (可指定一个或多个)
+    #[arg(short, long, num_args = 1..)] // 允许 1 个或多个参数
+    input: Vec<PathBuf>, // 类型从 PathBuf 变为 Vec<PathBuf>
 
     /// 整理后数据的输出目录路径
     #[arg(short, long)]
@@ -68,14 +69,10 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    if !cli.input.exists() {
-        anyhow::bail!("输入路径不存在: {}", cli.input.display());
-    }
-
     // 准备输出目录
     fs::create_dir_all(&cli.output).context(format!("无法创建输出目录: {}", cli.output.display()))?;
 
-    println!("- 开始扫描输入目录: {}", cli.input.display());
+    // --- 【RUST 修改 2/3】: 将收集逻辑放入一个循环中 ---
 
     // 1. 收集所有 FASTQ 和 MD5 文件信息
     let mut fastq_files: Vec<SampleFileInfo> = Vec::new();
@@ -86,52 +83,63 @@ fn main() -> Result<()> {
     let re_illumina = Regex::new(r"^(.*?)_S\d+_L\d+_([Rr][12])_\d+\.f(ast)?q\.gz$").unwrap();
     let re_generic = Regex::new(r"^(.*)[\._]([Rr][12]|[12])\.f(ast)?q\.gz$").unwrap();
 
-
-    for entry in WalkDir::new(&cli.input).into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file() {
-            let file_name = match path.file_name().and_then(|s| s.to_str()) {
-                Some(name) => name,
-                None => continue,
-            };
-
-            let mut matched = false;
-            // --- 【核心修改】: 使用 if / else if 结构，按顺序尝试匹配 ---
-            if let Some(caps) = re_illumina.captures(file_name) {
-                if let (Some(sample), Some(pair_cap)) = (caps.get(1), caps.get(2)) {
-                    let read_pair = if pair_cap.as_str().to_lowercase() == "r1" { "R1" } else { "R2" }.to_string();
-                    fastq_files.push(SampleFileInfo {
-                        sample_name: sample.as_str().to_string(),
-                        read_pair,
-                        original_path: path.to_path_buf(),
-                    });
-                    matched = true;
-                }
-            } else if let Some(caps) = re_generic.captures(file_name) {
-                if let (Some(sample), Some(pair_cap)) = (caps.get(1), caps.get(2)) {
-                    let read_pair = match pair_cap.as_str().to_lowercase().as_str() {
-                        "r1" | "1" => "R1".to_string(),
-                        "r2" | "2" => "R2".to_string(),
-                        _ => unreachable!(),
-                    };
-                    fastq_files.push(SampleFileInfo {
-                        sample_name: sample.as_str().to_string(),
-                        read_pair,
-                        original_path: path.to_path_buf(),
-                    });
-                    matched = true;
-                }
-            }
-            
-            if !matched {
-                 if file_name.ends_with(".fq.gz") || file_name.ends_with(".fastq.gz") {
-                    unmatched_fastq_files.push(path.to_path_buf());
-                } else if file_name.to_lowercase().contains("md5") && file_name.ends_with(".txt") {
-                    md5_files.push(path.to_path_buf());
-                }
-            }
+    // --- 遍历所有传入的 input 路径 ---
+    for input_path in &cli.input {
+        
+        // 检查路径是否存在 (移到循环内部)
+        if !input_path.exists() {
+            anyhow::bail!("输入路径不存在: {}", input_path.display());
         }
-    }
+        println!("- 开始扫描输入目录: {}", input_path.display());
+
+        // WalkDir 现在使用 input_path
+        for entry in WalkDir::new(input_path).into_iter().filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_file() {
+                let file_name = match path.file_name().and_then(|s| s.to_str()) {
+                    Some(name) => name,
+                    None => continue,
+                };
+
+                let mut matched = false;
+                // --- 【核心修改】: 使用 if / else if 结构，按顺序尝试匹配 ---
+                if let Some(caps) = re_illumina.captures(file_name) {
+                    if let (Some(sample), Some(pair_cap)) = (caps.get(1), caps.get(2)) {
+                        let read_pair = if pair_cap.as_str().to_lowercase() == "r1" { "R1" } else { "R2" }.to_string();
+                        fastq_files.push(SampleFileInfo {
+                            sample_name: sample.as_str().to_string(),
+                            read_pair,
+                            original_path: path.to_path_buf(),
+                        });
+                        matched = true;
+                    }
+                } else if let Some(caps) = re_generic.captures(file_name) {
+                    if let (Some(sample), Some(pair_cap)) = (caps.get(1), caps.get(2)) {
+                        let read_pair = match pair_cap.as_str().to_lowercase().as_str() {
+                            "r1" | "1" => "R1".to_string(),
+                            "r2" | "2" => "R2".to_string(),
+                            _ => unreachable!(),
+                        };
+                        fastq_files.push(SampleFileInfo {
+                            sample_name: sample.as_str().to_string(),
+                            read_pair,
+                            original_path: path.to_path_buf(),
+                        });
+                        matched = true;
+                    }
+                }
+                
+                if !matched {
+                    if file_name.ends_with(".fq.gz") || file_name.ends_with(".fastq.gz") {
+                        unmatched_fastq_files.push(path.to_path_buf());
+                    } else if file_name.to_lowercase().contains("md5") && file_name.ends_with(".txt") {
+                        md5_files.push(path.to_path_buf());
+                    }
+                }
+            }
+        } // --- WalkDir 循环结束 ---
+    } // --- 【RUST 修改 3/3】: 遍历 input 路径的循环结束 ---
+
 
     if !unmatched_fastq_files.is_empty() {
         let mut error_message =

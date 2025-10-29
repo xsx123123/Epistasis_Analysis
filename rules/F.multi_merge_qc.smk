@@ -33,8 +33,6 @@ rule all_qc_multiqc_report:
 
 rule mapping_qc_multiqc_report:
     input:
-        dist = expand("../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.txt", sample=samples.keys()),
-        summary = expand("../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt", sample=samples.keys()),
         qualimap_report_html = expand('../02.mapping/qualimap_report/{sample}/qualimapReport.html', sample=samples.keys()),
         qualimap_report_txt = expand('../02.mapping/qualimap_report/{sample}/genome_results.txt', sample=samples.keys()),
         samtools_flagstat = expand('../02.mapping/samtools_flagstat/{sample}_dup_bam_flagstat.tsv', sample=samples.keys()),

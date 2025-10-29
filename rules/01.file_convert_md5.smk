@@ -4,11 +4,18 @@ import os
 # ------- rule ------- #
 rule seq_preprocessor:
     input:
-        md5 = expand(os.path.join(config['raw_data_path'],
-                    '{sample}'),sample=samples.keys()),
+        md5 = get_all_input_dirs(samples.keys(),config = config),
     output:
-        md5_check = directory(os.path.join(config['raw_data_path'],config['convert_md5'])),
-        md5_check_json = os.path.join(config['raw_data_path'],config['convert_md5'],"raw_data_md5.json"),
+        md5_check = directory(os.path.join('../00.raw_data',config['convert_md5'])),
+        md5_check_json = os.path.join('../00.raw_data',config['convert_md5'],"raw_data_md5.json"),
+        link_r1 = expand(os.path.join('../00.raw_data',
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R1.fq.gz"),
+                                      sample=samples.keys()),
+        link_r2 = expand(os.path.join('../00.raw_data',
+                                      config['convert_md5'],
+                                      "{sample}/{sample}_R2.fq.gz"),
+                                      sample=samples.keys()),
     message:
         "Running seq_preprocessor on raw data data",
     benchmark:
@@ -29,14 +36,12 @@ rule seq_preprocessor:
 
 rule check_md5:
     input:
-        md5_check_json = os.path.join(config['raw_data_path'],
-                                      config['convert_md5'],
-                                      "raw_data_md5.json"),
-        link_r1 = expand(os.path.join(config['raw_data_path'],
+        md5_check_json = os.path.join('../00.raw_data',config['convert_md5'],"raw_data_md5.json"),
+        link_r1 = expand(os.path.join('../00.raw_data',
                                       config['convert_md5'],
                                       "{sample}/{sample}_R1.fq.gz"),
                                       sample=samples.keys()),
-        link_r2 = expand(os.path.join(config['raw_data_path'],
+        link_r2 = expand(os.path.join('../00.raw_data',
                                       config['convert_md5'],
                                       "{sample}/{sample}_R2.fq.gz"),
                                       sample=samples.keys()),
@@ -49,7 +54,7 @@ rule check_md5:
     log:
         "../logs/01.qc/md5_check.log",
     params:
-        md5_check = os.path.join(config['raw_data_path'],config['convert_md5']),
+        md5_check = os.path.join('../00.raw_data',config['convert_md5']),
         log_file = "../logs/01.qc/md5_check.log",
     threads: 
         config['threads']['md5_check'],

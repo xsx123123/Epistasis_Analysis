@@ -5,10 +5,10 @@ import os
 rule short_read_fastp:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r1_dir =  os.path.join(config['raw_data_path'],
+        link_r1_dir =  os.path.join("../00.raw_data",
                                       config['convert_md5'],
                                       "{sample}/{sample}_R1.fq.gz"),
-        link_r2_dir =  os.path.join(config['raw_data_path'],
+        link_r2_dir =  os.path.join("../00.raw_data",
                                       config['convert_md5'],
                                       "{sample}/{sample}_R2.fq.gz"),
     output:

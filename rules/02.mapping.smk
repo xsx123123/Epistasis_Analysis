@@ -126,9 +126,10 @@ rule Duplicates_bam_index:
 rule bam_coverage:
     input:
         bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
+        bam_bai = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam.bai',
     output:
-        dist = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.global.dist.txt",
-        summary = "../02.mapping/mosdepth_coverage/{sample}.mosdepth.summary.txt",
+        dist = "../02.mapping/mosdepth_coverage/{sample}.sort.Dup.global.dist.txt",
+        summary = "../02.mapping/mosdepth_coverage/{sample}.sort.Dup.mosdepth.summary.txt",
     conda:
         "../envs/mosdepth.yaml",
     message:
@@ -148,7 +149,7 @@ rule bam_coverage:
                  -t {threads} \
                  --by 500 \
                  {params.prefix} \
-                 {input.bam} 2>{log}
+                 {input.bam} &>{log}
         """
 
 rule qualimap_qc:

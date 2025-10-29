@@ -5,7 +5,7 @@ import os
 rule short_read_qc_r1:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r1_dir = os.path.join(config['raw_data_path'],
+        link_r1_dir = os.path.join("../00.raw_data",
                                       config['convert_md5'],
                                       "{sample}/{sample}_R1.fq.gz"),
     output:
@@ -33,7 +33,7 @@ rule short_read_qc_r1:
 rule short_read_qc_r2:
     input:
         md5_check = "../01.qc/md5_check.tsv",
-        link_r2_dir = os.path.join(config['raw_data_path'],
+        link_r2_dir = os.path.join("../00.raw_data",
                                       config['convert_md5'],
                                       "{sample}/{sample}_R2.fq.gz"),
     output:

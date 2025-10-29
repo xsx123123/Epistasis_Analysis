@@ -37,7 +37,7 @@ trim:
   adapter_fasta: "./data/Universal_Adapter.fa"
 # analysis resource
 threads:
-  md5_check: 10
+  md5_check: 30
   bwa_mem2: 10
   samtools: 10
   fastp: 5
