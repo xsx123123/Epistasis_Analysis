@@ -89,6 +89,7 @@ rule fastq_screen_multiqc_r1:
     shell:
         """
         multiqc {params.fastqc_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
@@ -116,6 +117,7 @@ rule fastq_screen_multiqc_r2:
     shell:
         """
         multiqc {params.fastqc_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}

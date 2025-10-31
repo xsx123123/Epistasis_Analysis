@@ -193,6 +193,7 @@ rule variant_stats_multiqc:
     shell:
         """
         multiqc {params.bcftools_reports} \
+                --force \
                 --outdir {output.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}

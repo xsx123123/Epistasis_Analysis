@@ -70,6 +70,7 @@ rule multiqc_trim:
     shell:
         """
         multiqc {params.fastqc_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
