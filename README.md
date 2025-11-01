@@ -1,6 +1,6 @@
 ***Author  : JZHANG***  
-***Date    : 2025-10-17***  
-***Version : 1.0v***
+***Date    : 2025-11-1***  
+***Version : 2.0v***
 # Epistasis Analysis
 ## Introduction
 `Epistasis Analysis`项目是基于WGS+RNA数据对群体中存在的上位性进行研究的代码仓库
@@ -48,12 +48,59 @@ snakemake --use-conda --conda-cleanup-envs
 # Runing the snakemake pipeline via mamba
 snakemake --cores=50 -p --conda-frontend mamba --use-conda
 ```
-
-
 ```bash
 # 测试 & 开发模式
 snakemake --dry-run
 ```
 
----
+### 运行 Nextflow 流程 (Run Nextflow pipeline)
+本流程同样支持 Nextflow (DSL2) 进行部署和运行。
+#### 1.安装 Nextflow
+首先，你需要安装 Nextflow。根据 nextflow.config 中的 manifest 定义，推荐使用 v23.04.0 或更高版本。
+```bash
+# 推荐使用 SDKMAN 安装：
+curl -s "https://get.sdkman.io" | bash
+# (打开新终端后)
+sdk install nextflow
+# 或者使用 cURL 直接下载：
+curl -s https://get.nextflow.io | bash
+# (将 nextflow 可执行文件移动到 $PATH 路径下)
+```
+#### 2. 理解 profiles 配置文件
+本流程使用 profiles 来管理执行器（在哪里运行）和软件环境（如何运行）。你可以在 conf/profiles.config 中查看和修改它们的定义。
+主要 profile 分类:
+  执行器 (Executor):
+  - local: 在你的本地机器上执行流程（默认并发数较高，请见配置）。
+  - slurm: 将任务提交到 Slurm 集群调度系统。
+  软件管理器 (Software):
+  - conda: 使用 Conda / Micromamba 来自动创建和管理 envs/ 目录下的环境。
+  - docker: 使用 Docker 容器来运行（需要 Docker 服务运行中）。
+  - singularity: slurm profile 默认启用了 Singularity (Apptainer) 容器支持。
+  你必须组合使用这些 profile 来指定运行方式。
+
+#### 3.运行流程
+基础运行 (Conda)
+这是你提供的基础运行命令，使用 conda profile，并连接到 Nextflow Tower 进行监控：
+```bash
+# 注意: 这个命令依赖于 nextflow.config 中设置的默认执行器
+./Epistasis.nf -resume -with-tower -name "epistasis_$(date +%Y%m%d_%H%M%S)" -profile conda
+```
+
+推荐的运行方式 (组合 Profile)
+为了更明确地控制执行器和环境，推荐组合使用 profile，并使用 --参数 来指定输入/输出：
+
+
+```bash
+# 本地运行 (使用 Conda):
+./Epistasis.nf -resume -profile local,conda --outdir ./results --pop "EUR_cohort"
+# 集群运行 (使用 Singularity - Slurm profile 内置):
+./Epistasis.nf -resume -profile slurm --outdir /path/to/results --pop "ASN_cohort"
+# 本地运行 (使用 Docker):
+./Epistasis.nf -resume -profile local,docker --outdir ./results --pop "AFR_cohort"
+```
+#### 4.主要参数 (Main Parameters)
+你可以在命令行中使用 --参数名 <值> 的方式来指定 Epistasis.nf 脚本中的 params。
+  --input: (必需) 输入样本表，例如 samplesheet.csv。
+  --outdir: (可选) 所有输出结果的保存目录。 [默认: ./results]
+  --pop: (可选) 群体的名称，用于命名输出文件或目录。 [默认: default_population]
 ## Reference
