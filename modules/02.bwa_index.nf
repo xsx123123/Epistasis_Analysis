@@ -1,6 +1,6 @@
 // 02.bwa_index.nf 
 process BWA_INDEX {
-    tag "${genome}_BWA_INDEX"
+    tag "${genome}_bwa-mem2_index"
 
     publishDir "${params.outdir}/02.reference", mode: 'link'
 
@@ -8,11 +8,10 @@ process BWA_INDEX {
     path genome
 
     output:
-    path "index", emit: index 
+    path "Lsat_Salinas_v11.genome.fasta*", emit: index 
 
     script:
     """
-    mkdir index
-    bwa-mem2 index -p index/${params.bwa_index_prefix} ${genome}
+    ${params.bwa_mem2_path} index ${genome}
     """
 }
