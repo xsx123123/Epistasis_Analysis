@@ -1,5 +1,7 @@
+// 03.snpEff_annotation.nf
 process SNPEFF_ANNOTATION {
-    publishDir "${params.outdir}/04_variant_calling/", mode: 'copy', pattern: "merge_filter.sort.annotation.*"
+    tag 'SNPEFF_ANNOTATION'
+    publishDir "${params.outdir}/03.variant_calling/", mode: 'link', pattern: "merge_filter.sort.annotation.*"
 
     input:
     path filtered_vcf
@@ -10,8 +12,6 @@ process SNPEFF_ANNOTATION {
     path "merge_filter.sort.annotation.csv", emit: annotated_csv
     path "merge_filter.sort.annotation.html", emit: annotated_html
     path "merge_filter.sort.annotation.vcf", emit: annotated_vcf
-
-    conda "${baseDir}/envs/snpEff.yaml"
 
     script:
     """

@@ -1,10 +1,12 @@
+// 02.bwa_mem.nf
 process BWA_MEM {
-    tag "$sample_id"
-    publishDir "${params.outdir}/03_mapping/${sample_id}", mode: 'copy', pattern: "*.bam"
-
+    tag "${sample_id}_BWA_MEM"
+    
+    publishDir "${params.outdir}/02.mapping/${sample_id}", mode: 'link', pattern: "*.bam"
+    
     input:
     tuple val(sample_id), path(fq1), path(fq2)
-    path bwa_index_dir
+    each path(bwa_index)
 
     output:
     tuple val(sample_id), path("*.bam"), emit: bam
@@ -14,7 +16,7 @@ process BWA_MEM {
     """
     bwa-mem2 mem -t ${task.cpus} \
         -R ${read_group} \
-        ${bwa_index_dir}/genome \
+        ${bwa_index}/${params.bwa_index_prefix} \
         ${fq1} ${fq2} | \
     samtools view -@ ${task.cpus} -Sbh -o ${sample_id}.bam
     """

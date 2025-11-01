@@ -1,7 +1,10 @@
+// 03.bcftools_call.nf
 process BCFTOOLS_CALL {
-    tag "$sample_id"
-    publishDir "${params.outdir}/04_variant_calling/${sample_id}", mode: 'copy', pattern: "*.raw.vcf.gz"
+    
+    tag "${sample_id}_Bcftools_call_variant"
 
+    publishDir "${params.outdir}/03.variant_calling/${sample_id}", mode: 'link', pattern: "*.raw.vcf.gz"
+    
     input:
     tuple val(sample_id), path(bam), path(bai)
 
@@ -10,11 +13,11 @@ process BCFTOOLS_CALL {
 
     script:
     """
-    ${params.bcftools_path} mpileup \
+    bcftools mpileup \
         --threads ${task.cpus} \
         --verbosity ${params.bcftools_verbosity} \
         -f ${params.bcftools_reference} \
-        ${bam} | ${params.bcftools_path} call \
+        ${bam} | bcftools call \
         --threads ${task.cpus} \
         --ploidy ${params.bcftools_ploidy} \
         --verbosity ${params.bcftools_verbosity} \

@@ -1,7 +1,9 @@
+// 02.samtools_sort_index.nf
 process SAMTOOLS_SORT_INDEX {
-    tag "$sample_id"
-    publishDir "${params.outdir}/03_mapping/${sample_id}", mode: 'copy', pattern: "*.sort.bam*"
-
+    tag "${sample_id}_SORT_INDEX_BAM"
+    
+    publishDir "${params.outdir}/02.mapping/${sample_id}", mode: 'link', pattern: "*.sort.bam*"
+    
     input:
     tuple val(sample_id), path(bam)
 

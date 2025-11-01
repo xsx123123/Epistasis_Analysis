@@ -1,14 +1,14 @@
+// 02.samtools_stats.nf
 process SAMTOOLS_STATS {
-    tag "$sample_id"
-    publishDir "${params.outdir}/03_mapping/samtools_stats/${sample_id}", mode: 'copy'
-
+    tag "${sample_id}_samtools_stats"
+    
+    publishDir "${params.outdir}/02.mapping/samtools_stats/${sample_id}", mode: 'link'
+    
     input:
     tuple val(sample_id), path(bam), path(bai)
 
     output:
     path "*.stats.tsv", emit: stats_report
-
-    conda "${baseDir}/envs/bwa2.yaml" // samtools is in bwa2.yaml
 
     script:
     """

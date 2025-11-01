@@ -1,14 +1,14 @@
+// 02.samtools_flagstat.nf
 process SAMTOOLS_FLAGSTAT {
-    tag "$sample_id"
-    publishDir "${params.outdir}/03_mapping/samtools_flagstat/${sample_id}", mode: 'copy'
-
+    tag "${sample_id}_FLAGSTAT"
+    
+    publishDir "${params.outdir}/02.mapping/${sample_id}", mode: 'link'
+    
     input:
     tuple val(sample_id), path(bam), path(bai)
 
     output:
     path "*.flagstat.tsv", emit: flagstat_report
-
-    conda "${baseDir}/envs/bwa2.yaml" // samtools is in bwa2.yaml
 
     script:
     """

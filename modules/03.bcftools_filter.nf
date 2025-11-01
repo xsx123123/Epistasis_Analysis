@@ -1,6 +1,9 @@
+// 03.bcftools_filter.nf 
 process BCFTOOLS_FILTER {
-    publishDir "${params.outdir}/04_variant_calling/", mode: 'copy', pattern: "merge_filter.sort.vcf.gz*"
+    tag "Merge_Bcftools_filter_variant"
 
+    publishDir "${params.outdir}/03.variant_calling/", mode: 'link', pattern: "merge_filter.sort.vcf.gz*"
+    
     input:
     path merged_vcf
     path merged_vcf_csi
@@ -13,13 +16,13 @@ process BCFTOOLS_FILTER {
 
     script:
     """
-    ${params.bcftools_path} view --threads ${task.cpus} \
+    bcftools view --threads ${task.cpus} \
         -v snps,indels \
         -i 'F_MISSING <= 0.1 && MAF >= 0.05' \
         ${merged_vcf} -O z -o merge_filter.sort.vcf.gz
-    ${params.bcftools_path} index --threads ${task.cpus} \
+    bcftools index --threads ${task.cpus} \
         -t merge_filter.sort.vcf.gz -o merge_filter.sort.vcf.gz.tbi
-    ${params.bcftools_path} index --threads ${task.cpus} \
+    bcftools index --threads ${task.cpus} \
         -c merge_filter.sort.vcf.gz -o merge_filter.sort.vcf.gz.csi
     """
 }

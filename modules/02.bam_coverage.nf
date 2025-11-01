@@ -1,7 +1,10 @@
+// 02.bam_coverage.nf 
 process BAM_COVERAGE {
-    tag "$sample_id"
-    publishDir "${params.outdir}/03_mapping/mosdepth_coverage/${sample_id}", mode: 'copy'
+    
+    tag "${sample_id}_bam_coverage"
 
+    publishDir "${params.outdir}/02.mapping/${sample_id}", mode: 'link'
+    
     input:
     tuple val(sample_id), path(bam), path(bai)
 
