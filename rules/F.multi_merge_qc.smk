@@ -26,6 +26,7 @@ rule all_qc_multiqc_report:
     shell:
         """
         multiqc {params.fastqc_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
@@ -55,6 +56,7 @@ rule mapping_qc_multiqc_report:
     shell:
         """
         multiqc {params.fastqc_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}
@@ -81,6 +83,7 @@ rule variant_stats_multiqc_report:
     shell:
         """
         multiqc {params.bcftools_reports} \
+                --force \
                 --outdir {params.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}

@@ -3,35 +3,96 @@
 import os
 from loguru import logger
 # ----- rule ----- #
-rule call_variant_by_bcftools:
+#rule call_variant_by_bcftools:
+#    input:
+#        bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
+#    output:
+#        vcf = '../03.call_variant/{sample}.raw.vcf.gz',
+#    log:
+#        "../logs/03.call_variant/{sample}_variant.log",
+#    benchmark:
+#            "../benchmarks/{sample}_variant_benchmark.txt",
+#    threads: 
+#        config["threads"]["bcftools_call"],
+#    params:
+#        reference = config["bcftools"]['reference'],
+#        path = config["bcftools"]['path'],
+#        ploidy = config["bcftools"]['ploidy'],
+#        verbosity = config["bcftools"]['verbosity'],
+#    message:
+#        " Running bcftools mpileup & bcftools call (Predefined ploidy:{params.ploidy}) on the sorted and duplicate marked BAM : {input.bam}",
+#    shell:
+#        """
+#        {params.path} mpileup \
+#                 --threads {threads} \
+#                 --verbosity {params.verbosity} \
+#                 -f {params.reference} \
+#                 {input.bam} | {params.path} call \
+#                 --threads {threads} \
+#                 --ploidy {params.ploidy} \
+#                 --verbosity {params.verbosity} \
+#                 -mv -Oz -o {output.vcf} &>{log}
+#        """
+rule call_variant_by_chromosome:
     input:
         bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
+        bai = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam.bai',
     output:
-        vcf = '../03.call_variant/{sample}.raw.vcf.gz',
+        vcf = temp('../03.call_variant/by_chr/{sample}.{chr}.raw.vcf.gz'),
     log:
-        "../logs/03.call_variant/{sample}_variant.log",
+        "../logs/03.call_variant/{sample}_{chr}_variant.log",
     benchmark:
-            "../benchmarks/{sample}_variant_benchmark.txt",
-    threads: 
-        config["threads"]["bcftools"],
+        "../benchmarks/{sample}_{chr}_variant_benchmark.txt",
+    threads:
+        config["threads"]["bcftools_call"],
     params:
         reference = config["bcftools"]['reference'],
         path = config["bcftools"]['path'],
         ploidy = config["bcftools"]['ploidy'],
         verbosity = config["bcftools"]['verbosity'],
+        chr = "{chr}",
     message:
-        " Running bcftools mpileup & bcftools call (Predefined ploidy:{params.ploidy}) on the sorted and duplicate marked BAM : {input.bam}",
+        "Running bcftools mpileup & call on {wildcards.sample} chromosome {wildcards.chr}",
     shell:
         """
         {params.path} mpileup \
                  --threads {threads} \
                  --verbosity {params.verbosity} \
+                 -r {params.chr} \
                  -f {params.reference} \
+                 -Ou \
                  {input.bam} | {params.path} call \
                  --threads {threads} \
                  --ploidy {params.ploidy} \
                  --verbosity {params.verbosity} \
                  -mv -Oz -o {output.vcf} &>{log}
+        """
+
+rule concat_sample_chromosomes:
+    input:
+        vcf_list = lambda wildcards: expand(
+            '../03.call_variant/by_chr/{sample}.{chr}.raw.vcf.gz',
+            sample=wildcards.sample,
+            chr=CHROMOSOMES
+        ),
+    output:
+        vcf = '../03.call_variant/{sample}.raw.vcf.gz',
+    log:
+        "../logs/03.call_variant/{sample}_concat_chr.log",
+    benchmark:
+        "../benchmarks/{sample}_concat_chr_benchmark.txt",
+    threads: 
+        config["threads"]["bcftools"],
+    params:
+        path = config["bcftools"]['path'],
+    message:
+        "Concatenating chromosome VCFs for sample: {wildcards.sample}",
+    shell:
+        """
+        {params.path} concat \
+          --threads {threads} \
+          -Oz -o {output.vcf} \
+          {input.vcf_list} &>{log}
         """
 
 rule sort_index_bcftools:
@@ -193,6 +254,7 @@ rule variant_stats_multiqc:
     shell:
         """
         multiqc {params.bcftools_reports} \
+                --force \
                 --outdir {output.report_dir} \
                 -i {params.title} \
                 -n {params.report} &> {log}

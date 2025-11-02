@@ -46,6 +46,7 @@ threads:
   samtools_flagstat: 10
   samtools_stats: 10
   fastq_screen: 10
+  bcftools_call: 2
   bcftools: 10
   snpEff: 1
 # other parameter

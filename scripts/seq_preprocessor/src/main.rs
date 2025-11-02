@@ -1,13 +1,19 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use regex::Regex;
-// --- 【修改 1/4】: 引入 serde 用于 JSON 序列化 ---
+// --- 引入用于 JSON 序列化 ---
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
+// --- 修复 E0425 错误：引入 read_link ---
+use std::fs::read_link;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use walkdir::WalkDir;
+// --- 引入 Unix 平台的 symlink ---
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
+
 
 /// 用于解析文件名的结构体，包含样本名和R1/R2信息
 #[derive(Debug)]
@@ -17,7 +23,7 @@ struct SampleFileInfo {
     original_path: PathBuf,
 }
 
-// --- 【修改 2/4】: 新增用于生成 JSON 报告的结构体 ---
+/// 用于生成 JSON 报告的结构体
 #[derive(Serialize, Debug)]
 struct RenamingReportEntry {
     sample_name: String,
@@ -38,7 +44,6 @@ struct RenamingReportEntry {
 #[command(name = "seq_preprocessor")]
 #[command(about = "自动整理不同来源的测序数据，统一命名和目录结构。")]
 struct Cli {
-    // --- 【RUST 修改 1/3】: 修改 Cli 结构体以接受多个输入 ---
     /// 原始数据所在的根目录路径 (可指定一个或多个)
     #[arg(short, long, num_args = 1..)] // 允许 1 个或多个参数
     input: Vec<PathBuf>, // 类型从 PathBuf 变为 Vec<PathBuf>
@@ -60,7 +65,6 @@ struct Cli {
     #[arg(long)]
     no_per_sample_md5: bool,
     
-    // --- 【修改 3/4】: 添加新的命令行参数 ---
     /// 生成一个 JSON 格式的重命名报告文件。
     #[arg(long)]
     json_report: Option<PathBuf>,
@@ -72,14 +76,12 @@ fn main() -> Result<()> {
     // 准备输出目录
     fs::create_dir_all(&cli.output).context(format!("无法创建输出目录: {}", cli.output.display()))?;
 
-    // --- 【RUST 修改 2/3】: 将收集逻辑放入一个循环中 ---
-
     // 1. 收集所有 FASTQ 和 MD5 文件信息
     let mut fastq_files: Vec<SampleFileInfo> = Vec::new();
     let mut md5_files: Vec<PathBuf> = Vec::new();
     let mut unmatched_fastq_files: Vec<PathBuf> = Vec::new();
 
-    // --- 【核心修改】: 使用两个独立的、更简单的正则表达式，提高鲁棒性 ---
+    // --- 使用两个独立的、更简单的正则表达式，提高鲁棒性 ---
     let re_illumina = Regex::new(r"^(.*?)_S\d+_L\d+_([Rr][12])_\d+\.f(ast)?q\.gz$").unwrap();
     let re_generic = Regex::new(r"^(.*)[\._]([Rr][12]|[12])\.f(ast)?q\.gz$").unwrap();
 
@@ -102,7 +104,7 @@ fn main() -> Result<()> {
                 };
 
                 let mut matched = false;
-                // --- 【核心修改】: 使用 if / else if 结构，按顺序尝试匹配 ---
+                // --- 使用 if / else if 结构，按顺序尝试匹配 ---
                 if let Some(caps) = re_illumina.captures(file_name) {
                     if let (Some(sample), Some(pair_cap)) = (caps.get(1), caps.get(2)) {
                         let read_pair = if pair_cap.as_str().to_lowercase() == "r1" { "R1" } else { "R2" }.to_string();
@@ -138,7 +140,7 @@ fn main() -> Result<()> {
                 }
             }
         } // --- WalkDir 循环结束 ---
-    } // --- 【RUST 修改 3/3】: 遍历 input 路径的循环结束 ---
+    } // --- 遍历 input 路径的循环结束 ---
 
 
     if !unmatched_fastq_files.is_empty() {
@@ -186,7 +188,6 @@ fn main() -> Result<()> {
     println!("- 已将文件整理为 {} 个独立样本。", samples.len());
     
     let mut summary_md5_lines: Vec<String> = Vec::new();
-    // --- 【修改 4/4】: 初始化一个 Vec 来收集 JSON 报告的条目 ---
     let mut json_report_entries: Vec<RenamingReportEntry> = Vec::new();
 
     for (sample_name, (r1_opt, r2_opt)) in samples {
@@ -209,22 +210,78 @@ fn main() -> Result<()> {
         let new_r1_path = sample_output_dir.join(&new_r1_name);
         let new_r2_path = sample_output_dir.join(&new_r2_name);
 
+        // --- 【文件处理逻辑】: 检查、验证和处理链接/文件 ---
+
         #[cfg(unix)]
         {
-            if new_r1_path.exists() { fs::remove_file(&new_r1_path)?; }
-            if new_r2_path.exists() { fs::remove_file(&new_r2_path)?; }
-            std::os::unix::fs::symlink(&original_r1, &new_r1_path)
-                .context(format!("无法创建软链接: {}", new_r1_path.display()))?;
-            std::os::unix::fs::symlink(&original_r2, &new_r2_path)
-                .context(format!("无法创建软链接: {}", new_r2_path.display()))?;
+            // --- 帮助函数：处理 R1 或 R2 文件 ---
+            fn process_link(
+                new_path: &PathBuf, 
+                original_path: &PathBuf, 
+                read_name: &str,
+                sample_name: &str,
+            ) -> Result<()> {
+                if new_path.exists() {
+                    // 修复 E0425 错误的关键修改
+                    match read_link(new_path) { 
+                        Ok(target) => {
+                            if target == *original_path {
+                                println!("    - 文件 {} (R{}) 已存在且指向正确，跳过。", new_path.file_name().unwrap_or_default().to_string_lossy(), read_name);
+                                return Ok(());
+                            } else {
+                                println!("    - 文件 {} (R{}) 存在但指向错误 (当前: {}，应为: {}), 正在删除并重建...",
+                                    new_path.file_name().unwrap_or_default().to_string_lossy(),
+                                    read_name,
+                                    target.display(),
+                                    original_path.display()
+                                );
+                                fs::remove_file(new_path).context(format!("无法删除旧文件/链接: {}", new_path.display()))?;
+                            }
+                        },
+                        Err(_) => {
+                            // 不是软链接，或者读取失败（例如是普通文件），先删除
+                            println!("    - 文件 {} (R{}) 存在但不是有效软链接，正在删除并重建...", 
+                                new_path.file_name().unwrap_or_default().to_string_lossy(),
+                                read_name,
+                            );
+                            fs::remove_file(new_path).context(format!("无法删除旧文件: {}", new_path.display()))?;
+                        }
+                    }
+                }
+                
+                // 创建新的软链接
+                symlink(original_path, new_path)
+                    .context(format!("无法为样本 {} 创建软链接 {}: {}", sample_name, read_name, new_path.display()))?;
+                println!("    - 成功创建软链接 {}: {}", read_name, new_path.file_name().unwrap_or_default().to_string_lossy());
+                Ok(())
+            }
+
+            process_link(&new_r1_path, &original_r1, "1", &sample_name)?;
+            process_link(&new_r2_path, &original_r2, "2", &sample_name)?;
         }
         #[cfg(not(unix))]
         {
-             fs::copy(&original_r1, &new_r1_path)
-                .context(format!("无法复制文件: {}", new_r1_path.display()))?;
-             fs::copy(&original_r2, &new_r2_path)
-                .context(format!("无法复制文件: {}", new_r2_path.display()))?;
+             // 非 Unix 系统（例如 Windows）默认行为是复制。
+             // 检查文件是否存在，如果存在则跳过复制。
+             if new_r1_path.exists() {
+                 println!("    - 文件 {} (R1) 已存在（非Unix，可能是复制），跳过复制。", new_r1_path.file_name().unwrap_or_default().to_string_lossy());
+             } else {
+                 fs::copy(&original_r1, &new_r1_path)
+                    .context(format!("无法复制文件: {}", new_r1_path.display()))?;
+                 println!("    - 成功复制文件 {}: {}", "R1", new_r1_path.file_name().unwrap_or_default().to_string_lossy());
+             }
+
+             if new_r2_path.exists() {
+                 println!("    - 文件 {} (R2) 已存在（非Unix，可能是复制），跳过复制。", new_r2_path.file_name().unwrap_or_default().to_string_lossy());
+             } else {
+                 fs::copy(&original_r2, &new_r2_path)
+                    .context(format!("无法复制文件: {}", new_r2_path.display()))?;
+                 println!("    - 成功复制文件 {}: {}", "R2", new_r2_path.file_name().unwrap_or_default().to_string_lossy());
+             }
         }
+        
+        // --- 文件处理逻辑结束 ---
+
 
         let original_r1_filename = original_r1.file_name().unwrap().to_str().unwrap();
         let original_r2_filename = original_r2.file_name().unwrap().to_str().unwrap();
@@ -255,8 +312,8 @@ fn main() -> Result<()> {
             json_report_entries.push(RenamingReportEntry {
                 sample_name: sample_name.clone(),
                 new_r1_path_relative: relative_r1_path.to_string_lossy().to_string(),
-                new_r2_path_relative: relative_r2_path.to_string_lossy().to_string(),
                 original_r1_path_absolute: fs::canonicalize(&original_r1)?.to_string_lossy().to_string(),
+                new_r2_path_relative: relative_r2_path.to_string_lossy().to_string(),
                 original_r2_path_absolute: fs::canonicalize(&original_r2)?.to_string_lossy().to_string(),
                 md5_r1: checksum_r1,
                 md5_r2: checksum_r2,
@@ -292,7 +349,7 @@ fn main() -> Result<()> {
     }
 
     println!("\n- 所有任务完成！标准化的数据已存放于: {}", cli.output.display());
-    println!("- 提示: 脚本默认使用软链接（symlink）来指向原始文件，这不会消耗额外磁盘空间。");
+    println!("- 提示: 脚本默认在 Unix 系统上使用软链接（symlink）来指向原始文件，这不会消耗额外磁盘空间。");
 
     Ok(())
 }
