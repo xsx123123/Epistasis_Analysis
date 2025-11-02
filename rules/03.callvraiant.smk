@@ -33,7 +33,6 @@ from loguru import logger
 #                 --verbosity {params.verbosity} \
 #                 -mv -Oz -o {output.vcf} &>{log}
 #        """
-
 rule call_variant_by_chromosome:
     input:
         bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',

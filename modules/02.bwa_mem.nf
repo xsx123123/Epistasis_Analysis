@@ -16,7 +16,7 @@ process BWA_MEM {
     """
     bwa-mem2 mem -t ${task.cpus} \
         -R ${read_group} \
-        ${bwa_index}/${params.bwa_index_prefix} \
+        ${params.index_name} \
         ${fq1} ${fq2} | \
     samtools view -@ ${task.cpus} -Sbh -o ${sample_id}.bam
     """
