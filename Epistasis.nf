@@ -35,6 +35,8 @@ if (params.help) {
 // ---------------- //
 
 // include nextflow modules
+// nextflow help modules
+include { SAMTOOLS_FAIDX } from './modules/00.reference_index.nf'
 // raw data quality control & clean process
 include { FASTQC_RAW } from './modules/01.fastqc_raw.nf'
 include { FASTP_CLEAN } from './modules/01.fastp_clean.nf'
@@ -51,7 +53,7 @@ include { QUALIMAP_QC } from './modules/02.qualimap_qc.nf'
 include { SAMTOOLS_FLAGSTAT } from './modules/02.samtools_flagstat.nf'
 include { SAMTOOLS_STATS } from './modules/02.samtools_stats.nf'
 // variant calling process
-include { BCFTOOLS_CALL } from './modules/03.bcftools_call.nf'
+include { BCFTOOLS_CALL_BY_CHR; CONCAT_VCFS } from './modules/03.bcftools_call.nf'
 include { BCFTOOLS_SORT_INDEX } from './modules/03.bcftools_sort_index.nf'
 include { BCFTOOLS_MERGE } from './modules/03.bcftools_merge.nf'
 include { BCFTOOLS_FILTER } from './modules/03.bcftools_filter.nf'
@@ -142,12 +144,36 @@ workflow {
 
     // MultiQC report for mapping result
     MULTIQC_MAPPING(mapping_multiqc_input_list)
+
+    // Nextflow help
+    SAMTOOLS_FAIDX(ch_fasta)
+
+    // Create channel for chromosomes from genome index file
+    SAMTOOLS_FAIDX.out.fai
+        .splitText()
+        .map { line -> line.split('\t')[0] }
+        .filter { !it.isEmpty() }
+        .toSortedList()
+        .flatMap()
+        .set { ch_chromosomes }
     
-    // Call variant
-    BCFTOOLS_CALL(SAMBAMBA_MARKDUPLICATES.out.marked_duplicates_bam)
+    // Call Variant input
+    SAMBAMBA_MARKDUPLICATES.out.marked_duplicates_bam
+        .combine(ch_chromosomes)
+        .set { ch_call_inputs }
+    
+    // Call Variant by chromosome levels
+    BCFTOOLS_CALL_BY_CHR(ch_call_inputs)
+    BCFTOOLS_CALL_BY_CHR.out.vcf_by_chr
+        .groupTuple(by: 0)
+        .map { sample_id, chrs, vcfs -> [ sample_id, vcfs ] } 
+        .set { ch_concat_inputs }
+
+    // Concat chr vcfs
+    CONCAT_VCFS(ch_concat_inputs)
     
     // VCF Sort & Index
-    BCFTOOLS_SORT_INDEX(BCFTOOLS_CALL.out.raw_vcf)
+    BCFTOOLS_SORT_INDEX(CONCAT_VCFS.out.raw_vcf)
 
     // VCF Merge
     BCFTOOLS_MERGE(BCFTOOLS_SORT_INDEX.out.sorted_indexed_vcf.map{ it[1] }.collect(),
