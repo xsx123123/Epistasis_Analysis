@@ -33,6 +33,7 @@ from loguru import logger
 #                 --verbosity {params.verbosity} \
 #                 -mv -Oz -o {output.vcf} &>{log}
 #        """
+
 rule call_variant_by_chromosome:
     input:
         bam = '../02.mapping/bwa_mem2/MarkDup/{sample}.sort.Dup.bam',
@@ -69,7 +70,7 @@ rule call_variant_by_chromosome:
         """
 
 rule concat_sample_chromosomes:
-    
+    input:
         vcf_list = lambda wildcards: expand(
             '../03.call_variant/by_chr/{sample}.{chr}.raw.vcf.gz',
             sample=wildcards.sample,

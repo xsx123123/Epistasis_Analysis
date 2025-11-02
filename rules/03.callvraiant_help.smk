@@ -28,5 +28,5 @@ def get_chromosomes(config):
     except Exception as e:
         logger.error(f"Error reading reference genome '{reference_fasta}': {e}")
         raise
-# 获取染色体列表
+
 CHROMOSOMES = get_chromosomes(config)
