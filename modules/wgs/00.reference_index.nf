@@ -13,7 +13,6 @@ process SAMTOOLS_FAIDX {
 
     script:
     """
-    ln -s ${fasta} .
     samtools faidx ${fasta.name}
     """
 }
