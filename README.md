@@ -1,106 +1,159 @@
-***Author  : JZHANG***  
-***Date    : 2025-11-1***  
-***Version : 2.0v***
-# Epistasis Analysis
-## Introduction
-`Epistasis Analysis`项目是基于WGS+RNA数据对群体中存在的上位性进行研究的代码仓库
+[View Chinese Documentation](./docs/README_CN.md)
+
+---
+
+# Epistasis Analysis Pipeline
+
+This project is a high-performance Whole Genome Sequencing (WGS) data processing pipeline designed for epistasis analysis. It includes a complete workflow from raw FASTQ data to quality-controlled, filtered, and annotated variant call files (VCF).
+
+To provide maximum flexibility and reproducibility, the pipeline is implemented in two major bioinformatics workflow languages: **Nextflow** and **Snakemake**.
+
+Additionally, the project includes two command-line tools developed in Rust, `seq_preprocessor` and `json_md5_verifier`, for efficient and secure data organization and validation before analysis.
+
+## Core Features
+
+- **Dual-Engine Driven**: Provides two independent pipeline implementations with Nextflow (`Epistasis.nf`) and Snakemake (`snakefile`), allowing users to choose based on their familiarity and environment.
+- **Standardized Analysis Steps**: The pipeline integrates mainstream bioinformatics tools, including `Fastp`, `BWA-MEM2`, `Samtools`, `BCFtools`, `SnpEff`, and more.
+- **Efficient Parallel Computing**: Accelerates analysis by splitting variant calling tasks by chromosome for parallel execution with `bcftools`.
+- **Environment Isolation and Reproducibility**: Automatically manages software environments using Conda (for Snakemake) and Micromamba (for Nextflow) to ensure reproducibility across different systems.
+- **Intelligent Data Preprocessing**: Features built-in Rust tools for automated data organization and validation. This step is fully automated in the Snakemake workflow and can be manually run for the Nextflow workflow.
+
+## Directory Structure
+
+```
+.
+├── config/               # Detailed configuration files for Nextflow and Snakemake
+├── data/                 # Common data, such as adapter sequences
+├── envs/                 # Conda environment definitions (YAML) used by both Snakemake and Nextflow
+├── modules/              # Module scripts for the Nextflow pipeline (.nf)
+├── rules/                # Rule scripts for the Snakemake pipeline (.smk)
+├── scripts/              # Custom utility scripts, including Rust source code
+├── docs/                 # Directory for multi-language documentation
+│   └── README_CN.md      # Chinese documentation
+├── Epistasis.nf          # Main Nextflow pipeline script
+├── nextflow.config       # Main Nextflow configuration file
+├── snakefile             # Main Snakemake pipeline script
+├── config.yaml           # Main Snakemake configuration file
+├── sample.csv            # Example sample sheet for Snakemake
+├── @sample_nextflow.csv  # Example sample sheet for Nextflow
+└── README.md             # English documentation
+```
+
+---
+
 ## Workflow
-### Quality control
-`md5_checker_rs`
-为了加快分析速度在`scripts/md5_checker_rs`文件夹中使用`rust`语言编写了下机数据`MD5`质控脚本。`target`文件夹下的可直接运行的二进制文件为`md5_checker_rs`。是在`Ubuntu 20.04.4 LTS x86_64`系统下编译，如果需要在不同的平台下使用，请自行编译,编译命令:`cargo build --release`。
-```bash
-./md5_checker_rs --help
-使用多个线程自动查找和验证指定目录中的 MD5 校验和文件。
 
-Usage: md5_checker_rs [OPTIONS] <DIRECTORIES>...
+The data preparation steps differ depending on the chosen workflow engine (Nextflow or Snakemake).
 
-Arguments:
-  <DIRECTORIES>...  一个或多个包含数据文件和 MD5 校验和文件的目录路径。
+- **For Snakemake**: The data organization and validation steps are **fully integrated** into the workflow, enabling a "one-command" execution from raw data to final results.
+- **For Nextflow**: Data preprocessing steps must be **run manually** to generate standardized input files required by the pipeline.
 
-Options:
-  -f, --filename <FILENAME>  MD5 校验和文件的名称。 [default: MD5.txt]
-  -t, --threads <THREADS>    用于并发验证的线程数 (0 表示使用 Rayon 的默认值，通常是 CPU 核心数)。 [default: 0]
-  -o, --output <OUTPUT>      生成 TSV 格式报告文件的路径。
-  -h, --help                 Print help
-  -V, --version              Print version
+---
 
-示例: md5_checker_rs /path/to/data1 /path/to/data2 -f checksums.txt -t 16 -o report.tsv
-```
-## Run snakemake pipeline
+### **Custom Data Processing Tools**
 
-### Install `snakemake=9.9.0`
-```bash
-# fix conda channel_priority -> flexible
-conda config --set channel_priority flexible
-# Create snakemake conda environment and install snakemak
-conda create -n snakemake
-# activate snakemake
-conda activate snakemake
-# install snakemake=9.9.0
-conda install bioconda::snakemake=9.9.0
-```
-### Deployment Snakemake analysis environment via mamba & run pipeline
-```bash
-# Creating conda environments via mamba
-snakemake --use-conda --conda-create-envs-only --conda-frontend mamba
-# Clean install conda/mamba envs
-snakemake --use-conda --conda-cleanup-envs
-# Runing the snakemake pipeline via mamba
-snakemake --cores=50 -p --conda-frontend mamba --use-conda
-```
-```bash
-# 测试 & 开发模式
-snakemake --dry-run
-```
+This project provides two high-performance command-line tools developed in Rust for data preprocessing. These tools are called automatically by the Snakemake pipeline, but you need to run them manually for the Nextflow pipeline.
 
-### 运行 Nextflow 流程 (Run Nextflow pipeline)
-本流程同样支持 Nextflow (DSL2) 进行部署和运行。
-#### 1.安装 Nextflow
-首先，你需要安装 Nextflow。根据 nextflow.config 中的 manifest 定义，推荐使用 v23.04.0 或更高版本。
-```bash
-# 推荐使用 SDKMAN 安装：
-curl -s "https://get.sdkman.io" | bash
-# (打开新终端后)
-sdk install nextflow
-# 或者使用 cURL 直接下载：
-curl -s https://get.nextflow.io | bash
-# (将 nextflow 可执行文件移动到 $PATH 路径下)
-```
-#### 2. 理解 profiles 配置文件
-本流程使用 profiles 来管理执行器（在哪里运行）和软件环境（如何运行）。你可以在 conf/profiles.config 中查看和修改它们的定义。
-主要 profile 分类:
-  执行器 (Executor):
-  - local: 在你的本地机器上执行流程（默认并发数较高，请见配置）。
-  - slurm: 将任务提交到 Slurm 集群调度系统。
-  软件管理器 (Software):
-  - conda: 使用 Conda / Micromamba 来自动创建和管理 envs/ 目录下的环境。
-  - docker: 使用 Docker 容器来运行（需要 Docker 服务运行中）。
-  - singularity: slurm profile 默认启用了 Singularity (Apptainer) 容器支持。
-  你必须组合使用这些 profile 来指定运行方式。
-
-#### 3.运行流程
-基础运行 (Conda)
-这是你提供的基础运行命令，使用 conda profile，并连接到 Nextflow Tower 进行监控：
-```bash
-# 注意: 这个命令依赖于 nextflow.config 中设置的默认执行器
-./Epistasis.nf -resume -with-tower -name "epistasis_$(date +%Y%m%d_%H%M%S)" -profile conda
-```
-
-推荐的运行方式 (组合 Profile)
-为了更明确地控制执行器和环境，推荐组合使用 profile，并使用 --参数 来指定输入/输出：
-
+#### 1. Compile Rust Tools (First-Time Use)
 
 ```bash
-# 本地运行 (使用 Conda):
-./Epistasis.nf -resume -profile local,conda --outdir ./results --pop "EUR_cohort"
-# 集群运行 (使用 Singularity - Slurm profile 内置):
-./Epistasis.nf -resume -profile slurm --outdir /path/to/results --pop "ASN_cohort"
-# 本地运行 (使用 Docker):
-./Epistasis.nf -resume -profile local,docker --outdir ./results --pop "AFR_cohort"
+# Compile seq_preprocessor
+cd scripts/seq_preprocessor && cargo build --release
+
+# Compile json_md5_verifier
+cd ../json_md5_verifier && cargo build --release
 ```
-#### 4.主要参数 (Main Parameters)
-你可以在命令行中使用 --参数名 <值> 的方式来指定 Epistasis.nf 脚本中的 params。
-  --input: (必需) 输入样本表，例如 samplesheet.csv。
-  --outdir: (可选) 所有输出结果的保存目录。 [默认: ./results]
-  --pop: (可选) 群体的名称，用于命名输出文件或目录。 [默认: default_population]
-## Reference
+The compiled executables will be located in their respective `target/release/` directories. It is recommended to copy them to a directory in your system's `PATH`.
+
+#### 2. Tool Descriptions
+
+- **`seq_preprocessor`**: Scans raw data directories, automatically identifies and organizes FASTQ files, and creates a standardized sample directory structure using symbolic links (symlinks) to avoid data duplication. It also generates a JSON report containing file paths and MD5 checksums.
+
+- **`json_md5_verifier`**: Reads the JSON report generated by `seq_preprocessor` and uses multi-threading to concurrently verify file integrity by comparing MD5 checksums.
+
+---
+
+### **Running the Analysis Pipeline**
+
+#### 1. Dependencies
+
+- **Workflow Engines**:
+    - **Nextflow**: [Install Java 8 or higher](https://www.nextflow.io/docs/latest/getstarted.html#requirements), then run `curl -s https://get.nextflow.io | bash`.
+    - **Snakemake**: `conda install -c conda-forge -c bioconda snakemake`
+- **Environment Managers**:
+    - **For Snakemake users**: `conda` or `mamba` is required.
+    - **For Nextflow users**: `micromamba` is required.
+
+#### 2. Configuration and Execution
+
+##### **Using Snakemake (Automated Data Prep)**
+
+1.  **Configuration**: Edit the `config.yaml` file. You **only** need to specify the directory path(s) to your **raw FASTQ files** under `raw_data_path`. Also, configure other critical paths, such as the `genome` reference file.
+
+2.  **Execution**: Snakemake will first automatically call `seq_preprocessor` and `json_md5_verifier` to process your raw data, then proceed with the WGS analysis.
+
+    ```bash
+    # Run the pipeline (ensure conda/mamba is installed)
+    snakemake --snakefile snakefile \
+              --cores 32 \
+              --use-conda
+    ```
+
+##### **Using Nextflow (Manual Data Prep)**
+
+1.  **Manual Data Preparation**:
+    First, use the `seq_preprocessor` and `json_md5_verifier` tools to process your raw data. Assume the organized data is located in a directory named `./wgs_input`.
+
+    ```bash
+    # Step 1: Organize data
+    seq_preprocessor --input /path/to/raw_data --output ./wgs_input --json-report ./wgs_input/report.json
+
+    # Step 2: Verify data
+    json_md5_verifier --input ./wgs_input/report.json --base-dir ./wgs_input
+    ```
+
+2.  **Create Sample Sheet**: Following the format of `@sample_nextflow.csv`, create a sample sheet with paths pointing to the **organized** files.
+
+3.  **Configuration**: Modify the `params` section in `nextflow.config`, especially paths like `bcftools_reference`.
+
+4.  **Execution**:
+    ```bash
+    # Run the pipeline (ensure micromamba is installed)
+    nextflow run Epistasis.nf \
+        -profile conda \
+        --input your_sample_sheet.csv \
+        --outdir ./results_nextflow
+    ```
+
+- `--cores` / `-profile conda`: Specify the number of cores or use the conda/micromamba environment.
+- `--input` / `--outdir`: Specify the input sample sheet and the output directory.
+
+##### **Using Nextflow Tower (Optional)**
+
+This pipeline supports monitoring and management via [Nextflow Tower](https://tower.nf/).
+
+1.  **Get a Token**: Visit [tower.nf](https://tower.nf/), log in, and create a new token in the "Your Tokens" section.
+2.  **Configure Environment Variables**: In your terminal, export your Tower token and endpoint:
+    ```bash
+    export TOWER_ACCESS_TOKEN='YOUR_TOKEN_HERE'
+    export TOWER_ENDPOINT='https://api.tower.nf'
+    ```
+3.  **Run**: Add the `-with-tower` flag to your `nextflow run` command.
+    ```bash
+    nextflow run Epistasis.nf \
+        -with-tower \
+        -profile conda \
+        ...
+    ```
+    You can now monitor the pipeline's execution in real-time on the Tower website.
+
+## Pipeline Output
+
+Upon completion, you will find a series of structured subdirectories in your specified output directory (e.g., `results_nextflow`), containing the results from each analysis step:
+
+- `01.fastp_clean/`: Quality-controlled FASTQ files and reports.
+- `02.mapping/`: BAM alignment files, indexes, and various mapping quality reports.
+- `03.variant_calling/`: VCF files (raw, merged, filtered, and annotated) and related statistics.
+- `multiqc/`: A comprehensive MultiQC report aggregating results from all analysis steps.
+
+You can start by reviewing the HTML report in the `multiqc/` directory to assess the overall data quality. The final filtered and annotated VCF files in `03.variant_calling/` can be used for downstream epistasis analysis.
