@@ -36,30 +36,30 @@ if (params.help) {
 
 // include nextflow modules
 // nextflow help modules
-include { SAMTOOLS_FAIDX } from './modules/00.reference_index.nf'
+include { SAMTOOLS_FAIDX } from './modules/wgs/00.reference_index.nf'
 // raw data quality control & clean process
-include { FASTQC_RAW } from './modules/01.fastqc_raw.nf'
-include { FASTP_CLEAN } from './modules/01.fastp_clean.nf'
-include { FASTQ_SCREEN } from './modules/01.fastq_screen.nf'
-include { MULTIQC } from './modules/01.multiqc.nf'
+include { FASTQC_RAW } from './modules/wgs/01.fastqc_raw.nf'
+include { FASTP_CLEAN } from './modules/wgs/01.fastp_clean.nf'
+include { FASTQ_SCREEN } from './modules/wgs/01.fastq_screen.nf'
+include { MULTIQC } from './modules/wgs/01.multiqc.nf'
 // mapping process with bwa algorith
-include { BWA_INDEX } from './modules/02.bwa_index.nf'
-include { BWA_MEM } from './modules/02.bwa_mem.nf'
-include { SAMTOOLS_SORT_INDEX } from './modules/02.samtools_sort_index.nf'
-include { SAMBAMBA_MARKDUPLICATES } from './modules/02.sambamba_markduplicates.nf'
-include { MULTIQC_MAPPING } from  './modules/02.multiqc_mapping.nf'
-include { BAM_COVERAGE } from './modules/02.bam_coverage.nf'
-include { QUALIMAP_QC } from './modules/02.qualimap_qc.nf'
-include { SAMTOOLS_FLAGSTAT } from './modules/02.samtools_flagstat.nf'
-include { SAMTOOLS_STATS } from './modules/02.samtools_stats.nf'
+include { BWA_INDEX } from './modules/wgs/02.bwa_index.nf'
+include { BWA_MEM } from './modules/wgs/02.bwa_mem.nf'
+include { SAMTOOLS_SORT_INDEX } from './modules/wgs/02.samtools_sort_index.nf'
+include { SAMBAMBA_MARKDUPLICATES } from './modules/wgs/02.sambamba_markduplicates.nf'
+include { MULTIQC_MAPPING } from  './modules/wgs/02.multiqc_mapping.nf'
+include { BAM_COVERAGE } from './modules/wgs/02.bam_coverage.nf'
+include { QUALIMAP_QC } from './modules/wgs/02.qualimap_qc.nf'
+include { SAMTOOLS_FLAGSTAT } from './modules/wgs/02.samtools_flagstat.nf'
+include { SAMTOOLS_STATS } from './modules/wgs/02.samtools_stats.nf'
 // variant calling process
-include { BCFTOOLS_CALL_BY_CHR; CONCAT_VCFS } from './modules/03.bcftools_call.nf'
-include { BCFTOOLS_SORT_INDEX } from './modules/03.bcftools_sort_index.nf'
-include { BCFTOOLS_MERGE } from './modules/03.bcftools_merge.nf'
-include { BCFTOOLS_FILTER } from './modules/03.bcftools_filter.nf'
-include { SNPEFF_ANNOTATION } from './modules/03.snpEff_annotation.nf'
-include { BCFTOOLS_VARIANT_STATS } from './modules/03.bcftools_variant_stats.nf'
-include { MULTIQC_VARIANT_STATS } from './modules/03.multiqc_variant_stats.nf'
+include { BCFTOOLS_CALL_BY_CHR; CONCAT_VCFS } from './modules/wgs/03.bcftools_call.nf'
+include { BCFTOOLS_SORT_INDEX } from './modules/wgs/03.bcftools_sort_index.nf'
+include { BCFTOOLS_MERGE } from './modules/wgs/03.bcftools_merge.nf'
+include { BCFTOOLS_FILTER } from './modules/wgs/03.bcftools_filter.nf'
+include { SNPEFF_ANNOTATION } from './modules/wgs/03.snpEff_annotation.nf'
+include { BCFTOOLS_VARIANT_STATS } from './modules/wgs/03.bcftools_variant_stats.nf'
+include { MULTIQC_VARIANT_STATS } from './modules/wgs/03.multiqc_variant_stats.nf'
 
 // ---------------- //
 //    Workflow
