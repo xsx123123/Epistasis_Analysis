@@ -1,3 +1,4 @@
+// 00.reference_index.nf
 process SAMTOOLS_FAIDX {
     
     tag "samtools faidx ${fasta.baseName}"

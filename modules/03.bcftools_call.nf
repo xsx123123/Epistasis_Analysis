@@ -1,14 +1,7 @@
 // 03.bcftools_call.nf
-// 03.bcftools_call.nf
-
-/*
- * ========================================================================================
- * 1. 按染色体并行 Call Variant
- * ========================================================================================
- */
 process BCFTOOLS_CALL_BY_CHR {
     tag "${sample_id}_${chr}_Bcftools_call"
-    
+
     input:
     tuple val(sample_id), path(bam), path(bai)
     val(chr)
