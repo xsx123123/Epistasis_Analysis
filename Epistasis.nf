@@ -7,8 +7,6 @@ nextflow.enable.dsl=2
 ========================================================================================
 */
 
-// Parameters are defined in nextflow.config
-
 // ---------------- //
 //    Help Message
 // ---------------- //
@@ -24,11 +22,11 @@ if (params.help) {
       --sample_csv      Path to the sample sheet file (default: 'sample.csv')
       --raw_data_path   Path to the raw data directory
       --outdir          Path to the output directory (default: './results')
-      --fasta           Path to the reference genome FASTA file (REQUIRED)
       --help            Display this help message
     '''.stripIndent()
     exit 0
 }
+
 
 // ---------------- //
 //    Modules

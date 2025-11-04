@@ -12,8 +12,6 @@ process BAM_COVERAGE {
     path "*.mosdepth.global.dist.txt", emit: global_dist
     path "*.mosdepth.summary.txt", emit: summary
 
-    conda "${baseDir}/envs/mosdepth.yaml"
-
     script:
     """
     mosdepth -n \
