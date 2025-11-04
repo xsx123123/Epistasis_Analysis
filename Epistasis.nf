@@ -162,22 +162,17 @@ workflow {
     
     // Call Variant input
     SAMBAMBA_MARKDUPLICATES.out.marked_duplicates_bam
-        .combine(ch_chromosomes)
-        .set { ch_call_inputs }
+                           .combine(ch_chromosomes)
+                           .set { ch_call_inputs }
 
     BCFTOOLS_CALL_BY_CHR(ch_call_inputs)
-    
+
     // Collect bcftools vcf file
     BCFTOOLS_CALL_BY_CHR.out.vcf_by_chr
                         .groupTuple(by: 0)
-                        .map { grouped ->
-                            def sample_id = grouped[0]
-                            def vcf_tuples = grouped[1]
-                            def vcf_paths = vcf_tuples.collect { it[2] }
-                            tuple(sample_id, vcf_paths)
-                        }
+                        .map { sample_id, chrs, vcfs -> [sample_id, vcfs] }
                         .set { ch_concat_inputs }
-
+        
     // Concat chr vcfs
     CONCAT_VCFS(ch_concat_inputs)
     
