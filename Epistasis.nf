@@ -161,12 +161,18 @@ workflow {
         .set { ch_call_inputs }
     
     // Call Variant by chromosome levels
-    BCFTOOLS_CALL_BY_CHR(SAMBAMBA_MARKDUPLICATES.out.marked_duplicates_bam,
-                         ch_chromosomes)
+    BCFTOOLS_CALL_BY_CHR(
+        SAMBAMBA_MARKDUPLICATES.out.marked_duplicates_bam, 
+        ch_chromosomes
+    )
 
+    // Collect bcftools vcf file
     BCFTOOLS_CALL_BY_CHR.out.vcf_by_chr
         .groupTuple(by: 0)
-        .map { sample_id, chrs, vcfs -> [ sample_id, vcfs ] } 
+        .map { sample_id, list_of_tuples -> 
+            def vcfs = list_of_tuples.collect { it[2] } 
+            return [ sample_id, vcfs ] 
+        } 
         .set { ch_concat_inputs }
 
     // Concat chr vcfs
