@@ -82,7 +82,7 @@ def get_sample_data_dir(sample_id:str = None,
         if os.path.isdir(sample_dir):
             return sample_dir
                 
-    raise FileNotFoundError(f"无法在 {config['raw_data_path']} 中找到 {sample_id} ({sample_path_component}) 的数据目录")
+    raise FileNotFoundError(f"无法在 {config['raw_data_path']} 中找到 {sample_id} 的数据目录")
 
 def get_all_input_dirs(sample_keys:str = None,
                        config:dict = config) -> list:

@@ -3,5 +3,6 @@ project_name: 'WGS_Epistasis'
 raw_data_path:
   - '/data/jzhang/project/WGS_Epistasis_2025.10.17/00.raw_data'
   - '/data/jzhang/project/WGS_Epistasis_2025.10.17/00.raw_data/batch_2/01.RawData'
+  - '/data/jzhang/project/WGS_Epistasis_2025.10.17/00.raw_data/batch_3/01.RawData'
 # short read samples info
 sample_csv: '/data/jzhang/project/WGS_Epistasis_2025.10.17/workflow/sample.csv'

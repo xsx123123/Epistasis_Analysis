@@ -8,27 +8,6 @@ nextflow.enable.dsl=2
 */
 
 // ---------------- //
-//    Help Message
-// ---------------- //
-
-if (params.help) {
-    log.info '''
-    Epistasis Analysis Pipeline
-    =================================
-    Usage:
-    nextflow run main.nf -profile <docker/conda>
-
-    Parameters:
-      --sample_csv      Path to the sample sheet file (default: 'sample.csv')
-      --raw_data_path   Path to the raw data directory
-      --outdir          Path to the output directory (default: './results')
-      --help            Display this help message
-    '''.stripIndent()
-    exit 0
-}
-
-
-// ---------------- //
 //    Modules
 // ---------------- //
 
@@ -65,8 +44,7 @@ include { MULTIQC_VARIANT_STATS } from './modules/wgs/03.multiqc_variant_stats.n
 
 workflow {
     // Analysis init input channel
-    ch_samples = Channel
-    .fromPath(params.sample_csv) // loading nextflow channel from csv file
+    ch_samples = Channel.fromPath(params.sample_csv)
     .splitCsv(header:true)
     .map { row -> 
         tuple(
@@ -86,11 +64,14 @@ workflow {
     FASTP_CLEAN(ch_samples)
 
     // define raw & clean data channels
-    def all_reports_for_multiqc = FASTQC_RAW.out.zip
+    def all_reports_for_multiqc = FASTQC_RAW.out.zip_r1
+                                .mix(FASTQC_RAW.out.zip_r2) 
                                 .mix(FASTP_CLEAN.out.json)
                                 .mix(FASTP_CLEAN.out.html)
-                                .mix(FASTQ_SCREEN.out.screen_txt)
-                                .mix(FASTQ_SCREEN.out.screen_html)
+                                .mix(FASTQ_SCREEN.out.R1_screen_txt)
+                                .mix(FASTQ_SCREEN.out.R1_screen_html)
+                                .mix(FASTQ_SCREEN.out.R2_screen_txt)
+                                .mix(FASTQ_SCREEN.out.R2_screen_html)
 
     def multiqc_input_list = all_reports_for_multiqc.collect()
     
